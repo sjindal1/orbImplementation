@@ -114,14 +114,14 @@ int main(int argc, char **argv)
     }
 
     Image img_template(img_1.cols, img_1.rows, data);
-    std::vector<xy> corners = orb_detect_compute(img_template);
+    std::vector<KeyPoints> corners = orb_detect_compute(img_template);
 
     Mat displayImage = img_1.clone();
 
     cvtColor(displayImage, displayImage, CV_GRAY2BGR);
 
-    for(xy corner:corners){
-        circle(displayImage, Point2d(corner.x, corner.y), 1, Scalar(0,255,0));
+    for(KeyPoints corner:corners){
+        circle(displayImage, Point2d(corner.coord.x, corner.coord.y), 1, Scalar(0,255,0));
     }
 
     std::cout << corners.size() << std::endl;
@@ -151,14 +151,14 @@ int main(int argc, char **argv)
     }      
 
     Image img_scene(img_2.cols, img_2.rows, data_scene);
-    std::vector<xy> corners_scene = orb_detect_compute(img_scene);
+    std::vector<KeyPoints> corners_scene = orb_detect_compute(img_scene);
 
     Mat displayImageScene = img_2.clone();
 
     cvtColor(displayImageScene, displayImageScene, CV_GRAY2BGR);
 
-    for(xy corner:corners_scene){
-        circle(displayImageScene, Point2d(corner.x, corner.y), 1, Scalar(0,255,0));
+    for(KeyPoints corner:corners_scene){
+        circle(displayImageScene, Point2d(corner.coord.x, corner.coord.y), 1, Scalar(0,255,0));
     }
 
     cv::imshow("Fast features scene", displayImageScene);

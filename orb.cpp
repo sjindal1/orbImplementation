@@ -3,21 +3,26 @@
 
 #define Compare(X, Y) ((X)>=(Y))
 
-std::vector<xy> calculateHarrisAndKeepGood(Image img, std::vector<xy> &corners, int numKeyPoints, int edge_width){
+std::vector<KeyPoints> calculateHarrisAndKeepGood(Image img, std::vector<KeyPoints> &corners, int numKeyPoints, int edge_width){
 
     std::vector<std::pair<float, int>> harris_score;
     int n = corners.size();
     for(int i=0; i < n; i++){
-        xy corner = corners[i];
+        xy corner = corners[i].coord;
         // Ignore the corner if it lies close to the edge
         if(corner.x <= edge_width || corner.y < edge_width || corner.x > img.xsize - edge_width || corner.y > img.ysize - edge_width)
             continue;
         
         float intensiy_x_2 = 0, intensiy_y_2 = 0, intensiy_x_y = 0;
         for(int i=-1 ; i<2; i++){
-            for(int j=-1; j<1; j++){
-                float intensiy_x = img.data[corner.y + i][corner.x + j + 1] - img.data[corner.y + i][corner.x + j - 1];
-                float intensiy_y = img.data[corner.y + i + 1][corner.x + j] - img.data[corner.y + i - 1][corner.x + j];
+            for(int j=-1; j<2; j++){
+				// using sobel
+                float intensiy_x = (img.data[corner.y + i - 1][corner.x + j + 1] - img.data[corner.y + i - 1][corner.x + j - 1]) +
+							2*(img.data[corner.y + i][corner.x + j + 1] - img.data[corner.y + i][corner.x + j - 1]) +
+							(img.data[corner.y + i + 1][corner.x + j + 1] - img.data[corner.y + i + 1][corner.x + j - 1]);
+                float intensiy_y = (img.data[corner.y + i + 1][corner.x + j - 1] - img.data[corner.y + i - 1][corner.x + j] - 1) +
+						2*(img.data[corner.y + i + 1][corner.x + j] - img.data[corner.y + i - 1][corner.x + j]) +
+						(img.data[corner.y + i + 1][corner.x + j + 1] - img.data[corner.y + i - 1][corner.x + j + 1]);;
                 intensiy_x_2 += intensiy_x*intensiy_x;
                 intensiy_y_2 += intensiy_y*intensiy_y;
                 intensiy_x_y += intensiy_x*intensiy_y;
@@ -31,7 +36,7 @@ std::vector<xy> calculateHarrisAndKeepGood(Image img, std::vector<xy> &corners, 
 
     std::sort(harris_score.rbegin(), harris_score.rend());
 
-    std::vector<xy> good_corners;
+    std::vector<KeyPoints> good_corners;
     for(int i=0; i<numKeyPoints; i++){
         good_corners.push_back(corners[harris_score[i].second]);
     }
@@ -40,11 +45,11 @@ std::vector<xy> calculateHarrisAndKeepGood(Image img, std::vector<xy> &corners, 
 
 }
 
-std::vector<xy> orb_detect_compute(Image img, int fastThreshold, int numKeyPoints, int edge_width){
+std::vector<KeyPoints> orb_detect_compute(Image img, int fastThreshold, int numKeyPoints, int edge_width){
 
-    std::vector<xy> corners = fast9_detect_nonmax(img, fastThreshold);
+    std::vector<KeyPoints> corners = fast9_detect_nonmax(img, fastThreshold);
 
-    std::vector<xy> good_corners;
+    std::vector<KeyPoints> good_corners;
 
     if(corners.size() > numKeyPoints){
         good_corners = calculateHarrisAndKeepGood(img, corners, numKeyPoints, edge_width);
@@ -56,7 +61,7 @@ std::vector<xy> orb_detect_compute(Image img, int fastThreshold, int numKeyPoint
 
 }
 
-std::vector<xy> fast9_detect_nonmax(Image img, int b)
+std::vector<KeyPoints> fast9_detect_nonmax(Image img, int b)
 {
     byte* im = new byte[img.xsize*img.ysize];
     int k = 0;
@@ -80,7 +85,7 @@ std::vector<xy> fast9_detect_nonmax(Image img, int b)
 	free(corners);
 	free(scores);
 
-    std::vector<xy> corners_nomax;
+    std::vector<KeyPoints> corners_nomax;
     for(int i=0; i< num_corners; i++){
         corners_nomax.push_back(nonmax[i]);
     }
