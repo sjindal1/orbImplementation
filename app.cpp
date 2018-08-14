@@ -114,7 +114,10 @@ int main(int argc, char **argv)
     }
 
     Image img_template(img_1.cols, img_1.rows, data);
+    std::clock_t start;
+    start = std::clock();
     std::vector<KeyPoints> corners = orb_detect_compute(img_template);
+    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     Mat displayImage = img_1.clone();
 
@@ -151,7 +154,10 @@ int main(int argc, char **argv)
     }      
 
     Image img_scene(img_2.cols, img_2.rows, data_scene);
+
+    start = std::clock();
     std::vector<KeyPoints> corners_scene = orb_detect_compute(img_scene);
+    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     Mat displayImageScene = img_2.clone();
 

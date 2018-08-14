@@ -3,6 +3,8 @@
 
 #include<vector>
 #include <algorithm>
+#include<unordered_map>
+#include<math.h>
 
 typedef struct { int x, y; } xy; 
 typedef unsigned char byte;
@@ -10,6 +12,9 @@ typedef unsigned char byte;
 #define FAST_THRESHOLD 5
 #define NUM_KEY_POINTS 1000
 #define CORNER_WIDTH 5
+#define HARRIS_BLOCK_SIZE 7
+#define PATCH_SIZE 31
+#define PI 3.14159265
 
 struct KeyPoints
 {
@@ -53,14 +58,14 @@ xy* fast9_detect(const byte* im, int xsize, int ysize, int stride, int b, int* r
 
 int* fast9_score(const byte* i, int stride, xy* corners, int num_corners, int b);
 
-std::vector<KeyPoints> fast9_detect_nonmax(Image img, int b);
+std::vector<KeyPoints> fast9_detect_nonmax(Image &img, int b);
 
 xy* nonmax_suppression(const xy* corners, const int* scores, int num_corners, int* ret_num_nonmax);
 
-std::vector<KeyPoints> orb_detect_compute(Image img, int fastThreshold = FAST_THRESHOLD, int numKeyPoints = NUM_KEY_POINTS, int edge_width = CORNER_WIDTH);
+std::vector<KeyPoints> orb_detect_compute(Image &img, int fastThreshold = FAST_THRESHOLD, int numKeyPoints = NUM_KEY_POINTS, int edge_width = CORNER_WIDTH);
 
-std::vector<KeyPoints> calculateHarrisAndKeepGood(Image img, std::vector<KeyPoints> &corners, int numKeyPoints,int edge_width);
+std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoints> &corners, int numKeyPoints,int edge_width);
 
-void calculateOrientationOfCorners(Image img, std::vector<xy> corners, std::vector<KeyPoints> key_points);
+void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_points);
 
 #endif
