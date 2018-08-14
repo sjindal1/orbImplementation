@@ -3,7 +3,7 @@
 
 #define Compare(X, Y) ((X) >= (Y))
 
-std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoints> &corners, int numKeyPoints, int edge_width)
+std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoints> &corners, std::vector<std::vector<std::pair<float, float>>> &gradients, int numKeyPoints, int edge_width)
 {
 
 	std::vector<std::pair<float, int>> harris_score;
@@ -22,13 +22,8 @@ std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoi
 			for (int j = -r; j <= r; j++)
 			{
 				// using sobel
-				float intensiy_x = (img.data[corner.y + i - 1][corner.x + j + 1] - img.data[corner.y + i - 1][corner.x + j - 1]) +
-								   2 * (img.data[corner.y + i][corner.x + j + 1] - img.data[corner.y + i][corner.x + j - 1]) +
-								   (img.data[corner.y + i + 1][corner.x + j + 1] - img.data[corner.y + i + 1][corner.x + j - 1]);
-				float intensiy_y = (img.data[corner.y + i + 1][corner.x + j - 1] - img.data[corner.y + i - 1][corner.x + j] - 1) +
-								   2 * (img.data[corner.y + i + 1][corner.x + j] - img.data[corner.y + i - 1][corner.x + j]) +
-								   (img.data[corner.y + i + 1][corner.x + j + 1] - img.data[corner.y + i - 1][corner.x + j + 1]);
-				;
+				float intensiy_x = gradients[corner.y + i][corner.x + j].first;
+				float intensiy_y = gradients[corner.y + i][corner.x + j].second;
 				intensiy_x_2 += intensiy_x * intensiy_x;
 				intensiy_y_2 += intensiy_y * intensiy_y;
 				intensiy_x_y += intensiy_x * intensiy_y;
@@ -51,27 +46,30 @@ std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoi
 	return good_corners;
 }
 
-void calculateSobel(Image &img, std::vector<std::vector<float>> &gradient)
+void calculateSobel(Image &img, std::vector<std::vector<std::pair<float, float>>> &gradients)
 {
-	for (int i = 1; i < img.ysize - 1; i++)
+    // int kernel_1[3] = {1, 0, -1}, kernel_2[3] = {1, 2, 1};
+    std::vector<std::vector<std::pair<float, float>>> row_gradients(img.ysize, std::vector<std::pair<float, float>>(img.xsize));
+    for (int i = 0; i < img.ysize; i++)
 	{
 		for (int j = 1; j < img.xsize - 1; j++)
 		{
-			float intensity_x = img.data[i - 1][j + 1] - img.data[i - 1][j - 1] +
-								2 * (img.data[i][j + 1] - img.data[i][j - 1]) +
-								img.data[i + 1][j + 1] - img.data[i + 1][j - 1];
-			float intensity_y = img.data[i + 1][j - 1] - img.data[i - 1][j - 1] +
-								2 * (img.data[i + 1][j] - img.data[i - 1][j]) +
-								img.data[i + 1][j + 1] - img.data[i - 1][j + 1];
-			gradient[i][j] = std::sqrt(std::pow(intensity_x, 2) + std::pow(intensity_y, 2));
+            row_gradients[i][j].first = img.data[i][j-1] - img.data[i][j+1];
+            row_gradients[i][j].second = img.data[i][j-1] + img.data[i][j]*2 + img.data[i][j+1];
+        }
+    }
+    for (int i = 1; i < img.xsize - 1; i++)
+	{
+		for (int j = 1; j < img.ysize - 1; j++)
+		{
+            gradients[j][i].first = row_gradients[j-1][i].first + 2*row_gradients[j][i].first + row_gradients[j+1][i].first;
+            gradients[j][i].second = row_gradients[j-1][i].second - row_gradients[j+1][i].second;
 		}
 	}
 }
 
-void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_points)
+void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_points, std::vector<std::vector<std::pair<float, float>>> &gradients)
 {
-	std::vector<std::vector<float>> gradient(img.ysize, std::vector<float>(img.xsize, 0));
-	calculateSobel(img, gradient);
 	for (int i = 0; i < key_points.size(); i++)
 	{
 		xy corner = key_points[i].coord;
@@ -84,8 +82,8 @@ void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_point
 			for (int j = -r; j <= r; j++)
 			{
 				int x = corner.x + j, y = corner.y + i;
-				m_01 += y * gradient[y][x];
-				m_10 += x * gradient[y][x];
+				m_01 += y * gradients[y][x].second;
+				m_10 += x * gradients[y][x].first;
 			}
 		}
 		float theta = atan2(m_01, m_10) * 180 / PI;
@@ -98,18 +96,21 @@ std::vector<KeyPoints> orb_detect_compute(Image &img, int fastThreshold, int num
 
 	std::vector<KeyPoints> corners = fast9_detect_nonmax(img, fastThreshold);
 
+    std::vector<std::vector<std::pair<float, float>>> gradients(img.ysize, std::vector<std::pair<float, float>>(img.xsize));
+	calculateSobel(img, gradients);
+
 	std::vector<KeyPoints> good_corners;
 
 	if (corners.size() > numKeyPoints)
 	{
-		good_corners = calculateHarrisAndKeepGood(img, corners, numKeyPoints, edge_width);
+		good_corners = calculateHarrisAndKeepGood(img, corners, gradients, numKeyPoints, edge_width);
 	}
 	else
 	{
 		good_corners = corners;
 	}
 
-	calculateOrientationOfCorners(img, good_corners);
+	calculateOrientationOfCorners(img, good_corners, gradients);
 
 	return good_corners;
 }

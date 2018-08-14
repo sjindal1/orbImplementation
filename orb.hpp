@@ -64,8 +64,8 @@ xy* nonmax_suppression(const xy* corners, const int* scores, int num_corners, in
 
 std::vector<KeyPoints> orb_detect_compute(Image &img, int fastThreshold = FAST_THRESHOLD, int numKeyPoints = NUM_KEY_POINTS, int edge_width = CORNER_WIDTH);
 
-std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoints> &corners, int numKeyPoints,int edge_width);
+std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoints> &corners, std::vector<std::vector<std::pair<float, float>>> &gradients, int numKeyPoints,int edge_width);
 
-void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_points);
+void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_points, std::vector<std::vector<std::pair<float, float>>> &gradients);
 
 #endif
