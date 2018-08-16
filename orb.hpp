@@ -9,9 +9,9 @@
 typedef struct { int x, y; } xy; 
 typedef unsigned char byte;
 
-#define FAST_THRESHOLD 5
+#define FAST_THRESHOLD 20
 #define NUM_KEY_POINTS 1000
-#define CORNER_WIDTH 5
+#define CORNER_WIDTH 17
 #define HARRIS_BLOCK_SIZE 7
 #define PATCH_SIZE 31
 #define PI 3.14159265
@@ -33,22 +33,38 @@ struct KeyPoints
         :coord(other.coord), theta(other.theta) {}
 };
 
-struct Image
+struct Match
+{
+    int template_coor;
+    int scene_coor;
+    float distance;
+
+    Match() {}
+
+    Match(int tem_coor, int in_scene_coor, float in_distance)
+        :template_coor(tem_coor), scene_coor(in_scene_coor), distance(in_distance) {}
+};
+
+template <class T>
+struct Mat2
 {
     int xsize;
     int ysize;
     int stride;
-    std::vector<std::vector<int>> data;
+    T *data;
 
-    Image() {}
+    Mat2() {}
 
-    Image(int in_xsize, int in_ysize, std::vector<std::vector<int>> in_data)
+    Mat2(int in_xsize, int in_ysize)
+        : xsize(in_xsize), ysize(in_ysize), stride(in_xsize), data(new T[in_xsize*in_ysize]) {}
+
+    Mat2(int in_xsize, int in_ysize, T *in_data)
         : xsize(in_xsize), ysize(in_ysize), stride(in_xsize), data(in_data) {}
     
-    Image(int in_xsize, int in_ysize, int in_stride, std::vector<std::vector<int>> in_data)
+    Mat2(int in_xsize, int in_ysize, int in_stride, T *in_data)
         : xsize(in_xsize), ysize(in_ysize), stride(in_stride), data(in_data) {}
 
-    Image(const Image &other)
+    Mat2(const Mat2 &other)
         : xsize(other.xsize), ysize(other.ysize), stride(other.stride), data(other.data) {}
 };
 
@@ -58,14 +74,20 @@ xy* fast9_detect(const byte* im, int xsize, int ysize, int stride, int b, int* r
 
 int* fast9_score(const byte* i, int stride, xy* corners, int num_corners, int b);
 
-std::vector<KeyPoints> fast9_detect_nonmax(Image &img, int b);
+std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b);
 
 xy* nonmax_suppression(const xy* corners, const int* scores, int num_corners, int* ret_num_nonmax);
 
-std::vector<KeyPoints> orb_detect_compute(Image &img, int fastThreshold = FAST_THRESHOLD, int numKeyPoints = NUM_KEY_POINTS, int edge_width = CORNER_WIDTH);
+void orb_detect_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, std::vector<Mat2<int32_t>> &decriptors, int fastThreshold = FAST_THRESHOLD, int numKeyPoints = NUM_KEY_POINTS, int edge_width = CORNER_WIDTH);
 
-std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoints> &corners, std::vector<std::vector<std::pair<float, float>>> &gradients, int numKeyPoints,int edge_width);
+std::vector<KeyPoints> calculateHarrisAndKeepGood(Mat2<byte> &img, std::vector<KeyPoints> &corners, std::vector<std::vector<std::pair<float, float>>> &gradients, int numKeyPoints,int edge_width);
 
-void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_points, std::vector<std::vector<std::pair<float, float>>> &gradients);
+void calculateOrientationOfCorners(Mat2<byte> &img, std::vector<KeyPoints> &key_points, std::vector<std::vector<std::pair<float, float>>> &gradients);
+
+void computerOrbDescriptor(const Mat2<byte> &img, std::vector<KeyPoints> & corners, std::vector<Mat2<int32_t>> &descriptors);
+
+void remove_edge_keypoints(const Mat2<byte> &img, std::vector<KeyPoints> &corners, int edge_width);
+
+void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector<Mat2<int32_t>> &descriptors_scene, std::vector<std::vector<Match>> &matches);
 
 #endif

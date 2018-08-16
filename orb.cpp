@@ -1,9 +1,17 @@
 #include <stdlib.h>
+#include <iostream>
 #include "orb.hpp"
+#include <ctime>
+
+alignas(32) char gaussian_bit_pattern_31_x_a[256] = { 8,4,-11,7,2,1,-2,-13,-13,10,-13,-11,7,-4,-13,-9,12,-3,-6,11,4,5,3,-8,-2,-13,-7,-4,-10,5,5,1,9,4,2,-4,-8,4,0,-13,-3,-6,8,0,7,-13,10,-6,10,-13,-13,3,5,-1,3,2,-13,-13,-13,-7,6,-9,-2,-12,3,-7,-3,2,-11,-1,5,-4,-9,-12,10,7,-7,-4,7,-7,-13,-3,7,-13,1,2,-4,-1,7,1,9,-1,-13,7,12,6,5,2,3,2,9,-8,-11,1,6,2,6,3,7,-11,-10,-5,-10,8,4,-10,4,-2,-5,7,-9,-5,8,-9,1,7,-2,11,-12,3,5,0,-9,0,-1,5,3,-13,-5,-4,6,-7,-13,1,4,-2,2,-2,4,-6,-3,7,4,-13,7,7,-7,-8,-13,2,10,-6,8,2,-11,-12,-11,5,-2,-1,-13,-10,-3,2,-9,-4,-4,-6,6,-13,11,7,-1,-4,-7,-13,-7,-8,-5,-13,1,1,9,5,-1,-9,-1,-13,8,2,7,-10,-10,4,3,-4,5,4,-9,0,-12,3,-10,8,-8,2,10,6,-7,-3,-1,-3,-8,4,2,6,3,11,-3,4,2,-10,-13,-13,6,0,-13,-9,-13,5,2,-1,9,11,3,-1,3,-13,5,8,7,-10,7,9,7,-1};
+alignas(32) char gaussian_bit_pattern_31_y_a[256] = {-3,2,9,-12,-13,-7,-10,-13,-3,4,-8,7,7,-5,2,0,-6,6,-13,-13,7,-3,-7,-7,11,12,3,2,-12,-12,-6,0,11,7,-1,-12,-5,11,-8,-2,-2,9,12,9,-5,-6,7,-3,-9,8,0,3,7,7,-10,-4,0,-7,3,12,-10,-1,-5,5,-10,-7,-2,9,-13,6,-3,-13,-6,-10,2,12,-13,9,-1,6,11,7,-8,-7,-3,-6,3,-13,1,-1,1,-9,-13,7,-5,3,-13,-12,8,6,-12,4,12,12,-9,3,3,-3,8,-5,11,-8,5,-1,-6,12,-2,0,-8,-6,-13,-13,-8,-11,-8,-4,1,-6,-9,7,5,-4,12,7,2,11,5,-4,9,-7,5,6,6,-10,1,-2,-12,-13,1,-10,-13,5,-2,9,1,-8,-4,11,6,4,-5,-5,-3,-12,-2,-13,0,-3,-13,-8,-11,-2,9,-3,-13,6,12,-11,-3,11,11,-5,12,-8,1,-12,-2,5,-1,7,5,0,12,-8,11,-3,-10,1,-11,-13,-13,-10,-8,-6,12,2,-13,-13,9,3,1,2,-10,-13,-12,2,6,8,10,-9,-13,-7,-2,2,-5,-9,-1,-1,0,-11,-4,-6,7,12,0,-1,3,8,-6,-9,7,-6,5,-3,0,4,-6,0,8,9,-4,4,3,-7,0,-6};
+alignas(32) char gaussian_bit_pattern_31_x_b[256] = {9,7,-8,12,2,1,-2,-11,-12,11,-8,-9,12,-3,-12,-7,12,-2,-4,12,5,10,6,-6,-1,-8,-5,-3,-6,6,7,4,11,4,4,-2,-7,9,1,-8,-2,-4,10,1,11,-11,12,-6,12,-8,-8,7,10,1,5,3,-13,-12,-11,-4,12,-7,0,-7,8,-4,-1,5,-5,0,5,-4,-9,-8,12,12,-6,-3,12,-5,-12,-2,12,-11,12,3,-2,1,8,3,12,-1,-10,10,12,7,6,2,4,12,10,-7,-4,2,7,3,11,8,9,-6,-5,-3,-9,12,6,-8,6,-2,-5,10,-8,-5,9,-9,1,9,-1,12,-6,7,10,2,-5,2,1,7,6,-8,-3,-3,8,-6,-5,3,8,2,12,0,9,-3,-1,12,5,-9,8,7,-7,-7,-12,3,12,-6,9,2,-10,-7,-10,11,-1,0,-12,-10,-2,3,-4,-3,-2,-4,6,-5,12,12,0,-3,-6,-8,-6,-6,-4,-8,5,10,10,10,1,-6,1,-8,10,3,12,-5,-8,8,8,-3,10,5,-4,3,-6,4,-10,12,-6,3,11,8,-6,-3,-1,-3,-8,12,3,11,7,12,-3,4,2,-8,-11,-11,11,1,-9,-6,-8,8,3,-1,11,12,3,0,4,-10,12,9,8,-10,12,10,12,0};
+alignas(32) char gaussian_bit_pattern_31_y_b[256] = {5,-12,2,-13,12,6,-4,-8,-9,9,-9,12,6,0,-3,5,-1,12,-8,-8,1,-3,12,-2,-10,10,-3,7,11,-7,-1,-5,-13,12,4,7,-10,12,-13,2,3,-9,7,3,-10,0,1,12,-4,-12,-4,8,-7,-12,6,-10,5,12,8,7,8,-6,12,5,-13,5,-7,-11,-13,-1,2,12,6,-4,-3,12,5,4,2,1,5,-6,-7,-12,12,0,-13,9,-6,12,6,3,5,12,9,11,10,3,-6,-13,3,9,-6,-8,-4,-2,0,-8,3,-4,10,12,0,-6,-11,7,7,12,2,12,-8,-2,-13,0,-2,1,-4,-11,4,12,8,8,-13,12,7,-9,-8,9,-3,-12,0,12,-2,10,-4,-13,12,-6,3,-5,1,-11,-7,-5,6,6,1,-8,-8,9,3,7,-8,8,3,-9,-5,8,12,9,-5,11,-13,2,0,-10,-7,9,11,5,6,-2,7,-2,7,-13,-8,-9,5,10,-13,-13,-1,-9,-13,2,12,-10,-6,-6,-9,-7,-13,5,-13,-3,-12,-1,3,-9,1,-8,9,12,-5,7,-8,-12,5,9,5,4,3,12,11,-13,12,4,6,12,1,1,1,-13,-13,4,-2,-3,-2,10,-9,-1,-2,-8,5,10,5,5,11,-6,-12,9,4,-2,-2,-11};
+
 
 #define Compare(X, Y) ((X) >= (Y))
 
-std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoints> &corners, std::vector<std::vector<std::pair<float, float>>> &gradients, int numKeyPoints, int edge_width)
+std::vector<KeyPoints> calculateHarrisAndKeepGood(Mat2<byte> &img, std::vector<KeyPoints> &corners, std::vector<std::vector<std::pair<float, float>>> &gradients, int numKeyPoints, int edge_width)
 {
 
 	std::vector<std::pair<float, int>> harris_score;
@@ -11,9 +19,9 @@ std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoi
 	for (int i = 0; i < n; i++)
 	{
 		xy corner = corners[i].coord;
-		// Ignore the corner if it lies close to the edge
-		if (corner.x <= edge_width || corner.y < edge_width || corner.x > img.xsize - edge_width || corner.y > img.ysize - edge_width)
-			continue;
+		// // Ignore the corner if it lies close to the edge
+		// if (corner.x <= edge_width || corner.y < edge_width || corner.x > img.xsize - edge_width || corner.y > img.ysize - edge_width)
+		// 	continue;
 
 		float intensiy_x_2 = 0, intensiy_y_2 = 0, intensiy_x_y = 0;
 		int r = HARRIS_BLOCK_SIZE / 2;
@@ -38,6 +46,7 @@ std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoi
 	std::sort(harris_score.rbegin(), harris_score.rend());
 
 	std::vector<KeyPoints> good_corners;
+    numKeyPoints = std::min((int)(1*n), numKeyPoints);
 	for (int i = 0; i < numKeyPoints; i++)
 	{
 		good_corners.push_back(corners[harris_score[i].second]);
@@ -46,7 +55,7 @@ std::vector<KeyPoints> calculateHarrisAndKeepGood(Image &img, std::vector<KeyPoi
 	return good_corners;
 }
 
-void calculateSobel(Image &img, std::vector<std::vector<std::pair<float, float>>> &gradients)
+void calculateSobel(Mat2<byte> &img, std::vector<std::vector<std::pair<float, float>>> &gradients)
 {
     // int kernel_1[3] = {1, 0, -1}, kernel_2[3] = {1, 2, 1};
     std::vector<std::vector<std::pair<float, float>>> row_gradients(img.ysize, std::vector<std::pair<float, float>>(img.xsize));
@@ -54,8 +63,8 @@ void calculateSobel(Image &img, std::vector<std::vector<std::pair<float, float>>
 	{
 		for (int j = 1; j < img.xsize - 1; j++)
 		{
-            row_gradients[i][j].first = img.data[i][j-1] - img.data[i][j+1];
-            row_gradients[i][j].second = img.data[i][j-1] + img.data[i][j]*2 + img.data[i][j+1];
+            row_gradients[i][j].first = *(img.data + i*img.stride + j - 1) - *(img.data + i*img.stride + j + 1);
+            row_gradients[i][j].second = *(img.data + i*img.stride + j - 1) + *(img.data + i*img.stride + j)*2 + *(img.data + i*img.stride + j + 1);
         }
     }
     for (int i = 1; i < img.xsize - 1; i++)
@@ -68,7 +77,7 @@ void calculateSobel(Image &img, std::vector<std::vector<std::pair<float, float>>
 	}
 }
 
-void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_points, std::vector<std::vector<std::pair<float, float>>> &gradients)
+void calculateOrientationOfCorners(Mat2<byte> &img, std::vector<KeyPoints> &key_points, std::vector<std::vector<std::pair<float, float>>> &gradients)
 {
 	for (int i = 0; i < key_points.size(); i++)
 	{
@@ -84,70 +93,435 @@ void calculateOrientationOfCorners(Image &img, std::vector<KeyPoints> &key_point
 				int x = corner.x + j, y = corner.y + i;
 				m_01 += y * gradients[y][x].second;
 				m_10 += x * gradients[y][x].first;
+                // m_01 += *(img.data + y*img.stride + x) * y;
+                // m_10 += *(img.data + y*img.stride + x) * x;
+                // float gradient = std::sqrt(std::pow(gradients[y][x].second, 2) + std::pow(gradients[y][x].first, 2));
+                // m_01 += y*gradient;
+                // m_10 += x*gradient;
 			}
 		}
 		float theta = atan2(m_01, m_10) * 180 / PI;
+        // float theta = atan(m_01/m_10) * 180 / PI;
 		key_points[i].theta = theta;
 	}
 }
 
-std::vector<KeyPoints> orb_detect_compute(Image &img, int fastThreshold, int numKeyPoints, int edge_width)
-{
+#define ROUND(value) value >=0 ? (int32_t)(value + 0.5):(int32_t)(value - 0.5)
 
+void computerOrbDescriptor(const Mat2<byte> &img, std::vector<KeyPoints> & corners, std::vector<Mat2<int32_t>> &descriptors){
+    for(KeyPoints corner:corners){
+        float cos_angle = std::cos(corner.theta);
+        float sin_angle = std::sin(corner.theta);
+
+        byte *image_center = img.data + corner.coord.y*img.stride + corner.coord.x;
+
+        alignas(16) int32_t ia_x[256];
+        alignas(16) int32_t ia_y[256];
+        alignas(16) int32_t ib_x[256];
+        alignas(16) int32_t ib_y[256];
+
+        for (int i = 0 ; i< 256; i++)  {
+            ia_x[i] = ROUND((gaussian_bit_pattern_31_x_a[i]*cos_angle - gaussian_bit_pattern_31_y_a[i]*sin_angle));
+            ia_y[i] = ROUND((gaussian_bit_pattern_31_x_a[i]*sin_angle + gaussian_bit_pattern_31_y_a[i]*cos_angle));
+            ib_x[i] = ROUND((gaussian_bit_pattern_31_x_b[i]*cos_angle - gaussian_bit_pattern_31_y_b[i]*sin_angle));
+            ib_y[i] = ROUND((gaussian_bit_pattern_31_x_b[i]*sin_angle + gaussian_bit_pattern_31_y_b[i]*cos_angle));
+        }
+
+        #define GET_VALUE(i, j) (*(image_center + ia_y[i*32 + j]*img.stride + ia_x[i*32 + j]) < *(image_center + ib_y[i*32 + j]*img.stride + ib_x[i*32 + j])) << j
+	
+        alignas(32) int32_t f[8] = {0, 0, 0, 0, 0, 0, 0, 0} ;
+        
+        f[0] |=  GET_VALUE(0, 0);
+        f[0] |=  GET_VALUE(0, 1);
+        f[0] |=  GET_VALUE(0, 2);
+        f[0] |=  GET_VALUE(0, 3);
+        f[0] |=  GET_VALUE(0, 4);
+        f[0] |=  GET_VALUE(0, 5);
+        f[0] |=  GET_VALUE(0, 6);
+        f[0] |=  GET_VALUE(0, 7);
+        f[0] |=  GET_VALUE(0, 8);
+        f[0] |=  GET_VALUE(0, 9);
+        f[0] |=  GET_VALUE(0, 10);
+        f[0] |=  GET_VALUE(0, 11);
+        f[0] |=  GET_VALUE(0, 12);
+        f[0] |=  GET_VALUE(0, 13);
+        f[0] |=  GET_VALUE(0, 14);
+        f[0] |=  GET_VALUE(0, 15);
+        f[0] |=  GET_VALUE(0, 16);
+        f[0] |=  GET_VALUE(0, 17);
+        f[0] |=  GET_VALUE(0, 18);
+        f[0] |=  GET_VALUE(0, 19);
+        f[0] |=  GET_VALUE(0, 20);
+        f[0] |=  GET_VALUE(0, 21);
+        f[0] |=  GET_VALUE(0, 22);
+        f[0] |=  GET_VALUE(0, 23);
+        f[0] |=  GET_VALUE(0, 24);
+        f[0] |=  GET_VALUE(0, 25);
+        f[0] |=  GET_VALUE(0, 26);
+        f[0] |=  GET_VALUE(0, 27);
+        f[0] |=  GET_VALUE(0, 28);
+        f[0] |=  GET_VALUE(0, 29);
+        f[0] |=  GET_VALUE(0, 30);
+        f[0] |=  GET_VALUE(0, 31);
+        
+        f[1] |=  GET_VALUE(1, 0);
+        f[1] |=  GET_VALUE(1, 1);
+        f[1] |=  GET_VALUE(1, 2);
+        f[1] |=  GET_VALUE(1, 3);
+        f[1] |=  GET_VALUE(1, 4);
+        f[1] |=  GET_VALUE(1, 5);
+        f[1] |=  GET_VALUE(1, 6);
+        f[1] |=  GET_VALUE(1, 7);
+        f[1] |=  GET_VALUE(1, 8);
+        f[1] |=  GET_VALUE(1, 9);
+        f[1] |=  GET_VALUE(1, 10);
+        f[1] |=  GET_VALUE(1, 11);
+        f[1] |=  GET_VALUE(1, 12);
+        f[1] |=  GET_VALUE(1, 13);
+        f[1] |=  GET_VALUE(1, 14);
+        f[1] |=  GET_VALUE(1, 15);
+        f[1] |=  GET_VALUE(1, 16);
+        f[1] |=  GET_VALUE(1, 17);
+        f[1] |=  GET_VALUE(1, 18);
+        f[1] |=  GET_VALUE(1, 19);
+        f[1] |=  GET_VALUE(1, 20);
+        f[1] |=  GET_VALUE(1, 21);
+        f[1] |=  GET_VALUE(1, 22);
+        f[1] |=  GET_VALUE(1, 23);
+        f[1] |=  GET_VALUE(1, 24);
+        f[1] |=  GET_VALUE(1, 25);
+        f[1] |=  GET_VALUE(1, 26);
+        f[1] |=  GET_VALUE(1, 27);
+        f[1] |=  GET_VALUE(1, 28);
+        f[1] |=  GET_VALUE(1, 29);
+        f[1] |=  GET_VALUE(1, 30);
+        f[1] |=  GET_VALUE(1, 31);
+        
+        f[2] |=  GET_VALUE(2, 0);
+        f[2] |=  GET_VALUE(2, 1);
+        f[2] |=  GET_VALUE(2, 2);
+        f[2] |=  GET_VALUE(2, 3);
+        f[2] |=  GET_VALUE(2, 4);
+        f[2] |=  GET_VALUE(2, 5);
+        f[2] |=  GET_VALUE(2, 6);
+        f[2] |=  GET_VALUE(2, 7);
+        f[2] |=  GET_VALUE(2, 8);
+        f[2] |=  GET_VALUE(2, 9);
+        f[2] |=  GET_VALUE(2, 10);
+        f[2] |=  GET_VALUE(2, 11);
+        f[2] |=  GET_VALUE(2, 12);
+        f[2] |=  GET_VALUE(2, 13);
+        f[2] |=  GET_VALUE(2, 14);
+        f[2] |=  GET_VALUE(2, 15);
+        f[2] |=  GET_VALUE(2, 16);
+        f[2] |=  GET_VALUE(2, 17);
+        f[2] |=  GET_VALUE(2, 18);
+        f[2] |=  GET_VALUE(2, 19);
+        f[2] |=  GET_VALUE(2, 20);
+        f[2] |=  GET_VALUE(2, 21);
+        f[2] |=  GET_VALUE(2, 22);
+        f[2] |=  GET_VALUE(2, 23);
+        f[2] |=  GET_VALUE(2, 24);
+        f[2] |=  GET_VALUE(2, 25);
+        f[2] |=  GET_VALUE(2, 26);
+        f[2] |=  GET_VALUE(2, 27);
+        f[2] |=  GET_VALUE(2, 28);
+        f[2] |=  GET_VALUE(2, 29);
+        f[2] |=  GET_VALUE(2, 30);
+        f[2] |=  GET_VALUE(2, 31);
+        
+        f[3] |=  GET_VALUE(3, 0);
+        f[3] |=  GET_VALUE(3, 1);
+        f[3] |=  GET_VALUE(3, 2);
+        f[3] |=  GET_VALUE(3, 3);
+        f[3] |=  GET_VALUE(3, 4);
+        f[3] |=  GET_VALUE(3, 5);
+        f[3] |=  GET_VALUE(3, 6);
+        f[3] |=  GET_VALUE(3, 7);
+        f[3] |=  GET_VALUE(3, 8);
+        f[3] |=  GET_VALUE(3, 9);
+        f[3] |=  GET_VALUE(3, 10);
+        f[3] |=  GET_VALUE(3, 11);
+        f[3] |=  GET_VALUE(3, 12);
+        f[3] |=  GET_VALUE(3, 13);
+        f[3] |=  GET_VALUE(3, 14);
+        f[3] |=  GET_VALUE(3, 15);
+        f[3] |=  GET_VALUE(3, 16);
+        f[3] |=  GET_VALUE(3, 17);
+        f[3] |=  GET_VALUE(3, 18);
+        f[3] |=  GET_VALUE(3, 19);
+        f[3] |=  GET_VALUE(3, 20);
+        f[3] |=  GET_VALUE(3, 21);
+        f[3] |=  GET_VALUE(3, 22);
+        f[3] |=  GET_VALUE(3, 23);
+        f[3] |=  GET_VALUE(3, 24);
+        f[3] |=  GET_VALUE(3, 25);
+        f[3] |=  GET_VALUE(3, 26);
+        f[3] |=  GET_VALUE(3, 27);
+        f[3] |=  GET_VALUE(3, 28);
+        f[3] |=  GET_VALUE(3, 29);
+        f[3] |=  GET_VALUE(3, 30);
+        f[3] |=  GET_VALUE(3, 31);
+        
+        f[4] |=  GET_VALUE(4, 0);
+        f[4] |=  GET_VALUE(4, 1);
+        f[4] |=  GET_VALUE(4, 2);
+        f[4] |=  GET_VALUE(4, 3);
+        f[4] |=  GET_VALUE(4, 4);
+        f[4] |=  GET_VALUE(4, 5);
+        f[4] |=  GET_VALUE(4, 6);
+        f[4] |=  GET_VALUE(4, 7);
+        f[4] |=  GET_VALUE(4, 8);
+        f[4] |=  GET_VALUE(4, 9);
+        f[4] |=  GET_VALUE(4, 10);
+        f[4] |=  GET_VALUE(4, 11);
+        f[4] |=  GET_VALUE(4, 12);
+        f[4] |=  GET_VALUE(4, 13);
+        f[4] |=  GET_VALUE(4, 14);
+        f[4] |=  GET_VALUE(4, 15);
+        f[4] |=  GET_VALUE(4, 16);
+        f[4] |=  GET_VALUE(4, 17);
+        f[4] |=  GET_VALUE(4, 18);
+        f[4] |=  GET_VALUE(4, 19);
+        f[4] |=  GET_VALUE(4, 20);
+        f[4] |=  GET_VALUE(4, 21);
+        f[4] |=  GET_VALUE(4, 22);
+        f[4] |=  GET_VALUE(4, 23);
+        f[4] |=  GET_VALUE(4, 24);
+        f[4] |=  GET_VALUE(4, 25);
+        f[4] |=  GET_VALUE(4, 26);
+        f[4] |=  GET_VALUE(4, 27);
+        f[4] |=  GET_VALUE(4, 28);
+        f[4] |=  GET_VALUE(4, 29);
+        f[4] |=  GET_VALUE(4, 30);
+        f[4] |=  GET_VALUE(4, 31);
+        
+        f[5] |=  GET_VALUE(5, 0);
+        f[5] |=  GET_VALUE(5, 1);
+        f[5] |=  GET_VALUE(5, 2);
+        f[5] |=  GET_VALUE(5, 3);
+        f[5] |=  GET_VALUE(5, 4);
+        f[5] |=  GET_VALUE(5, 5);
+        f[5] |=  GET_VALUE(5, 6);
+        f[5] |=  GET_VALUE(5, 7);
+        f[5] |=  GET_VALUE(5, 8);
+        f[5] |=  GET_VALUE(5, 9);
+        f[5] |=  GET_VALUE(5, 10);
+        f[5] |=  GET_VALUE(5, 11);
+        f[5] |=  GET_VALUE(5, 12);
+        f[5] |=  GET_VALUE(5, 13);
+        f[5] |=  GET_VALUE(5, 14);
+        f[5] |=  GET_VALUE(5, 15);
+        f[5] |=  GET_VALUE(5, 16);
+        f[5] |=  GET_VALUE(5, 17);
+        f[5] |=  GET_VALUE(5, 18);
+        f[5] |=  GET_VALUE(5, 19);
+        f[5] |=  GET_VALUE(5, 20);
+        f[5] |=  GET_VALUE(5, 21);
+        f[5] |=  GET_VALUE(5, 22);
+        f[5] |=  GET_VALUE(5, 23);
+        f[5] |=  GET_VALUE(5, 24);
+        f[5] |=  GET_VALUE(5, 25);
+        f[5] |=  GET_VALUE(5, 26);
+        f[5] |=  GET_VALUE(5, 27);
+        f[5] |=  GET_VALUE(5, 28);
+        f[5] |=  GET_VALUE(5, 29);
+        f[5] |=  GET_VALUE(5, 30);
+        f[5] |=  GET_VALUE(5, 31);
+        
+        f[6] |=  GET_VALUE(6, 0);
+        f[6] |=  GET_VALUE(6, 1);
+        f[6] |=  GET_VALUE(6, 2);
+        f[6] |=  GET_VALUE(6, 3);
+        f[6] |=  GET_VALUE(6, 4);
+        f[6] |=  GET_VALUE(6, 5);
+        f[6] |=  GET_VALUE(6, 6);
+        f[6] |=  GET_VALUE(6, 7);
+        f[6] |=  GET_VALUE(6, 8);
+        f[6] |=  GET_VALUE(6, 9);
+        f[6] |=  GET_VALUE(6, 10);
+        f[6] |=  GET_VALUE(6, 11);
+        f[6] |=  GET_VALUE(6, 12);
+        f[6] |=  GET_VALUE(6, 13);
+        f[6] |=  GET_VALUE(6, 14);
+        f[6] |=  GET_VALUE(6, 15);
+        f[6] |=  GET_VALUE(6, 16);
+        f[6] |=  GET_VALUE(6, 17);
+        f[6] |=  GET_VALUE(6, 18);
+        f[6] |=  GET_VALUE(6, 19);
+        f[6] |=  GET_VALUE(6, 20);
+        f[6] |=  GET_VALUE(6, 21);
+        f[6] |=  GET_VALUE(6, 22);
+        f[6] |=  GET_VALUE(6, 23);
+        f[6] |=  GET_VALUE(6, 24);
+        f[6] |=  GET_VALUE(6, 25);
+        f[6] |=  GET_VALUE(6, 26);
+        f[6] |=  GET_VALUE(6, 27);
+        f[6] |=  GET_VALUE(6, 28);
+        f[6] |=  GET_VALUE(6, 29);
+        f[6] |=  GET_VALUE(6, 30);
+        f[6] |=  GET_VALUE(6, 31);
+        
+        f[7] |=  GET_VALUE(7, 0);
+        f[7] |=  GET_VALUE(7, 1);
+        f[7] |=  GET_VALUE(7, 2);
+        f[7] |=  GET_VALUE(7, 3);
+        f[7] |=  GET_VALUE(7, 4);
+        f[7] |=  GET_VALUE(7, 5);
+        f[7] |=  GET_VALUE(7, 6);
+        f[7] |=  GET_VALUE(7, 7);
+        f[7] |=  GET_VALUE(7, 8);
+        f[7] |=  GET_VALUE(7, 9);
+        f[7] |=  GET_VALUE(7, 10);
+        f[7] |=  GET_VALUE(7, 11);
+        f[7] |=  GET_VALUE(7, 12);
+        f[7] |=  GET_VALUE(7, 13);
+        f[7] |=  GET_VALUE(7, 14);
+        f[7] |=  GET_VALUE(7, 15);
+        f[7] |=  GET_VALUE(7, 16);
+        f[7] |=  GET_VALUE(7, 17);
+        f[7] |=  GET_VALUE(7, 18);
+        f[7] |=  GET_VALUE(7, 19);
+        f[7] |=  GET_VALUE(7, 20);
+        f[7] |=  GET_VALUE(7, 21);
+        f[7] |=  GET_VALUE(7, 22);
+        f[7] |=  GET_VALUE(7, 23);
+        f[7] |=  GET_VALUE(7, 24);
+        f[7] |=  GET_VALUE(7, 25);
+        f[7] |=  GET_VALUE(7, 26);
+        f[7] |=  GET_VALUE(7, 27);
+        f[7] |=  GET_VALUE(7, 28);
+        f[7] |=  GET_VALUE(7, 29);
+        f[7] |=  GET_VALUE(7, 30);
+        f[7] |=  GET_VALUE(7, 31);
+
+        Mat2<int32_t> descriptor(8, 1);
+
+        for(int i=0; i<8; i++){
+            descriptor.data[i] = f[i];
+        }
+
+        descriptors.push_back(descriptor);
+	       
+    }
+
+}
+
+void remove_edge_keypoints(const Mat2<byte> &img, std::vector<KeyPoints> &corners, int edge_width){
+    for(int i=0; i<corners.size(); i++){
+        xy corner = corners[i].coord;
+        if (corner.x <= edge_width || corner.y < edge_width || corner.x > img.xsize - edge_width || corner.y > img.ysize - edge_width){
+            corners.erase(corners.begin() + i);
+            i--;
+        }
+    }
+}
+
+void calculateSummedAreaTable(Mat2<byte> &img, Mat2<int> &summedAreaTable){
+    summedAreaTable.data[0] = img.data[0];
+    for(int i=1; i < img.xsize; i++){
+        summedAreaTable.data[i] = img.data[i] + summedAreaTable.data[i - 1];
+    }
+
+    for(int i=1; i < img.ysize; i++){
+        summedAreaTable.data[i*img.stride] = img.data[i*img.stride] + summedAreaTable.data[(i-1)*img.stride];
+    }
+
+    for(int i=1; i < img.ysize; i++){
+        for(int j=1; j < img.xsize; j++){
+            summedAreaTable.data[i*img.stride + j] = img.data[i*img.stride + j] + 
+                                        summedAreaTable.data[i*img.stride + j - 1] + 
+                                        summedAreaTable.data[(i-1)*img.stride + j] - 
+                                        summedAreaTable.data[(i - 1)*img.stride + j - 1];
+        }
+    }
+}
+
+void gaussianBlur(Mat2<byte> &img, Mat2<byte> &gaussian){
+    // int kernel_1[3] = {1, 0, -1}, kernel_2[3] = {1, 2, 1};
+    Mat2<float> row_gradients(img.xsize, img.ysize);
+    for (int i = 0; i < img.ysize; i++)
+	{
+		for (int j = 2; j < img.xsize - 2; j++)
+		{
+            row_gradients.data[i*img.stride + j] = img.data[i*img.stride + j - 2] + 
+                                                    4*img.data[i*img.stride + j - 1] + 
+                                                    6*img.data[i*img.stride + j] + 
+                                                    4*img.data[i*img.stride + j + 1] + 
+                                                    img.data[i*img.stride + j + 2];
+        }
+    }
+    for (int i = 2; i < img.xsize - 2; i++)
+	{
+		for (int j = 2; j < img.ysize - 2; j++)
+		{
+            gaussian.data[j*img.stride + i] = (row_gradients.data[(j-2)*img.stride + i] + 
+                                            4*row_gradients.data[(j-1)*img.stride + i] + 
+                                            6*row_gradients.data[(j)*img.stride + i] + 
+                                            4*row_gradients.data[(j+1)*img.stride + i] + 
+                                            row_gradients.data[(j+2)*img.stride + i])/256;
+		}
+	}
+}
+
+void orb_detect_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, std::vector<Mat2<int32_t>> &decriptors, int fastThreshold, int numKeyPoints, int edge_width)
+{   
+    std::clock_t start;
+    start = std::clock();
 	std::vector<KeyPoints> corners = fast9_detect_nonmax(img, fastThreshold);
+    std::cout << "Time fast: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     std::vector<std::vector<std::pair<float, float>>> gradients(img.ysize, std::vector<std::pair<float, float>>(img.xsize));
 	calculateSobel(img, gradients);
+    remove_edge_keypoints(img, corners, edge_width);
+    good_corners = calculateHarrisAndKeepGood(img, corners, gradients, numKeyPoints, edge_width);
+	// if (corners.size() > numKeyPoints)
+	// 	good_corners = calculateHarrisAndKeepGood(img, corners, gradients, numKeyPoints, edge_width);
+	// {
+	// }
+	// else
+	// {
+	// 	good_corners = corners;
+	// }
 
-	std::vector<KeyPoints> good_corners;
+    // Mat2<int> summedAreaTable(img.xsize, img.ysize);
 
-	if (corners.size() > numKeyPoints)
-	{
-		good_corners = calculateHarrisAndKeepGood(img, corners, gradients, numKeyPoints, edge_width);
-	}
-	else
-	{
-		good_corners = corners;
-	}
+    // calculateSummedAreaTable(img, summedAreaTable);
 
 	calculateOrientationOfCorners(img, good_corners, gradients);
 
-	return good_corners;
+    Mat2<byte> gaussian(img.xsize, img.ysize);
+
+    gaussianBlur(img, gaussian);
+
+    computerOrbDescriptor(gaussian, good_corners, decriptors);
 }
 
-std::vector<KeyPoints> fast9_detect_nonmax(Image &img, int b)
+std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b)
 {
-	byte *im = new byte[img.xsize * img.ysize];
-	int k = 0;
-	for (int i = 0; i < img.ysize; i++)
-	{
-		for (int j = 0; j < img.xsize; j++)
-		{
-			im[k++] = img.data[i][j];
-		}
-	}
+	byte *im = img.data;
 	int xsize = img.xsize;
 	int ysize = img.ysize;
 	int stride = img.stride;
 	xy *corners;
 	int num_corners;
-	int *scores;
-	xy *nonmax;
+	// int *scores;
+	// xy *nonmax;
 
 	corners = fast9_detect(im, xsize, ysize, stride, b, &num_corners);
-	scores = fast9_score(im, stride, corners, num_corners, b);
-	nonmax = nonmax_suppression(corners, scores, num_corners, &num_corners);
+	// scores = fast9_score(im, stride, corners, num_corners, b);
+	// nonmax = nonmax_suppression(corners, scores, num_corners, &num_corners);
 
-	free(corners);
-	free(scores);
+	// free(corners);
+	// free(scores);
 
 	std::vector<KeyPoints> corners_nomax;
 	for (int i = 0; i < num_corners; i++)
 	{
-		corners_nomax.push_back(nonmax[i]);
+		corners_nomax.push_back(corners[i]);
 	}
 
-	free(nonmax);
+	// free(nonmax);
 	return corners_nomax;
 }
 
@@ -256,4 +630,39 @@ xy *nonmax_suppression(const xy *corners, const int *scores, int num_corners, in
 	free(row_start);
 	*ret_num_nonmax = num_nonmax;
 	return ret_nonmax;
+}
+
+
+void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector<Mat2<int32_t>> &descriptors_scene, std::vector<std::vector<Match>> &matches){
+    int template_size = descriptors_template.size();
+    int scene_size = descriptors_scene.size();
+
+    for(int i=0; i < template_size; i++){
+        int32_t *template_despriptor = descriptors_template[i].data;
+        int match_index_1 = -1, match_index_2 = -1; float distance_1 = 512, distance_2 = 512; 
+        for(int j=0; j < scene_size; j++){
+            int32_t *scene_despriptor = descriptors_scene[j].data;
+            float score = 0;
+            for(int k=0; k <8; k++){
+                score += __builtin_popcount(template_despriptor[k]^scene_despriptor[k]);
+            }
+
+            if(score < distance_1){
+                distance_2 = distance_1;
+                match_index_2 = match_index_1;
+                distance_1 = score;
+                match_index_1 = j;
+            }else if(score < distance_2){
+                distance_2 = score;
+                match_index_2 = j;
+            }
+        }
+
+        Match match_1(i, match_index_1, distance_1);
+        Match match_2(i, match_index_2, distance_2);
+        std::vector<Match> nnMatch;
+        nnMatch.push_back(match_1);
+        nnMatch.push_back(match_2);
+        matches.push_back(nnMatch);
+    }
 }
