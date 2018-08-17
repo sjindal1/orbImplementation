@@ -109,6 +109,7 @@ void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoint
         line(displayTogether, Point2d(corner1.x, corner1.y), Point2d(corner2.x, corner2.y), color);        
     }
 
+#ifdef NO_NONMAX
     std::vector<Point2f> obj;
     std::vector<Point2f> scene;
 
@@ -124,7 +125,7 @@ void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoint
 
     Mat H_1 = cv::Mat(3, 3, CV_32F, mat_object);
 
-    std::cout << H_1 << std::endl;
+    // std::cout << H_1 << std::endl;
 
     //-- Get the corners from the image_1 ( the object to be "detected" )
     std::vector<Point2f> obj_corners(4);
@@ -142,7 +143,7 @@ void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoint
     cv::line(displayTogether, scene_corners[2] + Point2f(displayImage.cols, 0), scene_corners[3] + Point2f(displayImage.cols, 0), Scalar(0, 255, 0), 4);
     cv::line(displayTogether, scene_corners[3] + Point2f(displayImage.cols, 0), scene_corners[0] + Point2f(displayImage.cols, 0), Scalar(0, 255, 0), 4);
 
-
+#endif
     imshow("Matched features",displayTogether);
 }
 
@@ -162,7 +163,7 @@ void calculateBestMatches(std::vector<KeyPoints> &corners, std::vector<KeyPoints
     Mat H = findHomography(obj, scene, CV_RANSAC);
     std::cout << "Time RANSAC: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
-    std::cout << H << std::endl;
+    // std::cout << H << std::endl;
 
     cv::perspectiveTransform(obj, transfor_obj, H);
 
@@ -217,7 +218,7 @@ int main(int argc, char **argv)
     start = std::clock();
     std::vector<KeyPoints> corners;
     std::vector<Mat2<int32_t>> decriptors;
-    orb_detect_compute(img_template, corners, decriptors);
+    orb_detect_compute(img_template, corners, decriptors, false);
     std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     Mat displayImage = img_1.clone();
@@ -255,11 +256,7 @@ int main(int argc, char **argv)
     std::vector<KeyPoints> corners_scene;
     std::vector<Mat2<int32_t>> decriptors_scene;
     orb_detect_compute(img_scene, corners_scene, decriptors_scene);
-    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
-    Mat displayImageScene = img_2.clone();
-
-    cvtColor(displayImageScene, displayImageScene, CV_GRAY2BGR);
 
     std::vector<std::vector<Match>> matches;
     matchFeatures(decriptors, decriptors_scene, matches);
@@ -272,10 +269,18 @@ int main(int argc, char **argv)
         }
         // good_matches.push_back(nnMatches[0]);
     }
+    Mat displayImageScene = img_2.clone();
 
+    cvtColor(displayImageScene, displayImageScene, CV_GRAY2BGR);
+
+#ifdef NO_NONMAX
     std::vector<Match> best_matches;
     calculateBestMatches(corners, corners_scene, good_matches, best_matches);
     plotMatches(displayImage, displayImageScene, corners, corners_scene, best_matches);
+#else
+    plotMatches(displayImage, displayImageScene, corners, corners_scene, good_matches);
+#endif
+    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     for(KeyPoints corner:corners){
         Scalar color = Scalar(rand()%255, rand()%255, rand()%255);
@@ -287,7 +292,6 @@ int main(int argc, char **argv)
         Scalar color = Scalar(rand()%255, rand()%255, rand()%255);
         circle(displayImageScene, Point2d(corner.coord.x, corner.coord.y), 2, color);
     }
-
 
     cv::imshow("Fast features scene", displayImageScene);
 

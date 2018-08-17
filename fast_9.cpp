@@ -1,8 +1,6 @@
 /*This is mechanically generated code*/
 #include <stdlib.h>
-
-typedef struct { int x, y; } xy; 
-typedef unsigned char byte;
+#include "orb.hpp"
 
 int fast9_corner_score(const byte* p, const int pixel[], int bstart)
 {    
@@ -2972,7 +2970,7 @@ int* fast9_score(const byte* i, int stride, xy* corners, int num_corners, int b)
 }
 
 
-xy* fast9_detect(const byte* im, int xsize, int ysize, int stride, int b, int* ret_num_corners)
+xy* fast9_detect(byte* im, int xsize, int ysize, int stride, int b, int* ret_num_corners, Mat2<short> &gradient_x, Mat2<short> &gradient_y, bool use_grad_indfo)
 {
 	int num_corners=0;
 	xy* ret_corners;
@@ -2983,13 +2981,24 @@ xy* fast9_detect(const byte* im, int xsize, int ysize, int stride, int b, int* r
 	ret_corners = (xy*)malloc(sizeof(xy)*rsize);
 	make_offsets(pixel, stride);
 
+	byte* p, *p0;
+  short *grad_x_ptr = gradient_x.data + 3*stride + 2, *grad_y_ptr = gradient_y.data + 3*stride + 2;
+
 	for(y=3; y < ysize - 3; y++)
+  {
+    p0 = im + y*stride;
 		for(x=3; x < xsize - 3; x++)
 		{
-			const byte* p = im + y*stride + x;
-		
-			int cb = *p + b;
+      if(use_grad_indfo){
+        grad_x_ptr++;
+        grad_y_ptr++;
+        if((*(grad_x_ptr) * *(grad_x_ptr)) + (*(grad_y_ptr) * *(grad_y_ptr)) < 50)
+          continue;
+      }
+			p = p0 + x; 
+      int cb = *p + b;
 			int c_b= *p - b;
+      
         if(p[pixel[0]] > cb)
          if(p[pixel[1]] > cb)
           if(p[pixel[2]] > cb)
@@ -5899,8 +5908,12 @@ xy* fast9_detect(const byte* im, int xsize, int ysize, int stride, int b, int* r
 			ret_corners[num_corners].x = x;
 			ret_corners[num_corners].y = y;
 			num_corners++;
-				
 		}
+    if(use_grad_indfo){
+      grad_x_ptr += 5;
+      grad_y_ptr += 5;
+    }
+  }
 	
 	*ret_num_corners = num_corners;
 	return ret_corners;

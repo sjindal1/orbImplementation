@@ -11,7 +11,7 @@ alignas(32) char gaussian_bit_pattern_31_y_b[256] = {5,-12,2,-13,12,6,-4,-8,-9,9
 
 #define Compare(X, Y) ((X) >= (Y))
 
-std::vector<KeyPoints> calculateHarrisAndKeepGood(Mat2<byte> &img, std::vector<KeyPoints> &corners, std::vector<std::vector<std::pair<float, float>>> &gradients, int numKeyPoints, int edge_width)
+std::vector<KeyPoints> calculateHarrisAndKeepGood(Mat2<byte> &img, std::vector<KeyPoints> &corners, Mat2<short> &gradient_x, Mat2<short> &gradient_y, int numKeyPoints, int edge_width)
 {
 
 	std::vector<std::pair<float, int>> harris_score;
@@ -27,11 +27,12 @@ std::vector<KeyPoints> calculateHarrisAndKeepGood(Mat2<byte> &img, std::vector<K
 		int r = HARRIS_BLOCK_SIZE / 2;
 		for (int i = -r; i <= r; i++)
 		{
+            int row_center = (corner.y + i)*gradient_x.stride + corner.x;
 			for (int j = -r; j <= r; j++)
 			{
 				// using sobel
-				float intensiy_x = gradients[corner.y + i][corner.x + j].first;
-				float intensiy_y = gradients[corner.y + i][corner.x + j].second;
+				float intensiy_x = gradient_x.data[row_center + j];
+				float intensiy_y = gradient_y.data[row_center + j];
 				intensiy_x_2 += intensiy_x * intensiy_x;
 				intensiy_y_2 += intensiy_y * intensiy_y;
 				intensiy_x_y += intensiy_x * intensiy_y;
@@ -55,29 +56,58 @@ std::vector<KeyPoints> calculateHarrisAndKeepGood(Mat2<byte> &img, std::vector<K
 	return good_corners;
 }
 
-void calculateSobel(Mat2<byte> &img, std::vector<std::vector<std::pair<float, float>>> &gradients)
+void calculateSobel(Mat2<byte> &img, Mat2<short> &gradient_x, Mat2<short> &gradient_y)
 {
     // int kernel_1[3] = {1, 0, -1}, kernel_2[3] = {1, 2, 1};
-    std::vector<std::vector<std::pair<float, float>>> row_gradients(img.ysize, std::vector<std::pair<float, float>>(img.xsize));
+    Mat2<short> row_gradient_x(img.xsize, img.ysize);
+    Mat2<short> row_gradient_y(img.xsize, img.ysize);
+    // std::vector<std::vector<std::pair<short, short>>> row_gradients(img.ysize, std::vector<std::pair<short, short>>(img.xsize));
+    byte* center = img.data, *center_end;
+    short* center_x = row_gradient_x.data;
+    short* center_y = row_gradient_y.data;
+
     for (int i = 0; i < img.ysize; i++)
 	{
-		for (int j = 1; j < img.xsize - 1; j++)
+        center_end = center + img.stride - 2;
+		while (center < center_end)
 		{
-            row_gradients[i][j].first = *(img.data + i*img.stride + j - 1) - *(img.data + i*img.stride + j + 1);
-            row_gradients[i][j].second = *(img.data + i*img.stride + j - 1) + *(img.data + i*img.stride + j)*2 + *(img.data + i*img.stride + j + 1);
+            //byte *center_j = center + j - 1;
+            *(center_x) = *(center) - *(center + 2);
+            *(center_y) = *(center) + *(center + 1)*2 + *(center + 2);
+            center++;
+            center_x++;
+            center_y++;
         }
+        center += 2;
+        center_x += 2;
+        center_y += 2;
     }
-    for (int i = 1; i < img.xsize - 1; i++)
+
+    center_x = row_gradient_x.data + 1;
+    center_y = row_gradient_y.data + 1;
+    short *grad_x_ptr = gradient_x.data + img.stride + 1;
+    short *grad_y_ptr = gradient_y.data + img.stride + 1;
+    short *center_x_end; 
+    for (int i = 0; i < img.ysize - 2; i++)
 	{
-		for (int j = 1; j < img.ysize - 1; j++)
+        center_x_end = center_x + img.stride - 2;
+		while(center_x < center_x_end)
 		{
-            gradients[j][i].first = row_gradients[j-1][i].first + 2*row_gradients[j][i].first + row_gradients[j+1][i].first;
-            gradients[j][i].second = row_gradients[j-1][i].second - row_gradients[j+1][i].second;
+            *(grad_x_ptr) = *(center_x) + 2* *(center_x + img.stride) + *(center_x + 2*img.stride);
+            *(grad_y_ptr) = *(center_y) - *(center_y + 2*img.stride);
+            grad_x_ptr++;
+            grad_y_ptr++;
+            center_x++;
+            center_y++;
 		}
+        grad_x_ptr+= 2;
+        grad_y_ptr+= 2;
+        center_x+= 2;
+        center_y+= 2;
 	}
 }
 
-void calculateOrientationOfCorners(Mat2<byte> &img, std::vector<KeyPoints> &key_points, std::vector<std::vector<std::pair<float, float>>> &gradients)
+void calculateOrientationOfCorners(Mat2<byte> &img, std::vector<KeyPoints> &key_points, Mat2<short> &gradient_x, Mat2<short> &gradient_y)
 {
 	for (int i = 0; i < key_points.size(); i++)
 	{
@@ -88,11 +118,12 @@ void calculateOrientationOfCorners(Mat2<byte> &img, std::vector<KeyPoints> &key_
 		float m_01 = 0, m_10 = 0;
 		for (int i = -r; i <= r; i++)
 		{
+            int row_center = (corner.y + i)*gradient_y.stride + corner.x;
 			for (int j = -r; j <= r; j++)
 			{
 				int x = corner.x + j, y = corner.y + i;
-				m_01 += y * gradients[y][x].second;
-				m_10 += x * gradients[y][x].first;
+				m_01 += y * gradient_y.data[row_center + j];
+				m_10 += x * gradient_x.data[row_center + j];
                 // m_01 += *(img.data + y*img.stride + x) * y;
                 // m_10 += *(img.data + y*img.stride + x) * x;
                 // float gradient = std::sqrt(std::pow(gradients[y][x].second, 2) + std::pow(gradients[y][x].first, 2));
@@ -439,42 +470,67 @@ void calculateSummedAreaTable(Mat2<byte> &img, Mat2<int> &summedAreaTable){
 
 void gaussianBlur(Mat2<byte> &img, Mat2<byte> &gaussian){
     // int kernel_1[3] = {1, 0, -1}, kernel_2[3] = {1, 2, 1};
-    Mat2<float> row_gradients(img.xsize, img.ysize);
+    Mat2<int> row_gradients(img.xsize, img.ysize);
+
+    byte *center = img.data, *center_end;
+    int *row_center = row_gradients.data + 2, *row_center_end;
     for (int i = 0; i < img.ysize; i++)
 	{
-		for (int j = 2; j < img.xsize - 2; j++)
+        center_end = center + img.stride - 4;
+		while(center < center_end)
 		{
-            row_gradients.data[i*img.stride + j] = img.data[i*img.stride + j - 2] + 
-                                                    4*img.data[i*img.stride + j - 1] + 
-                                                    6*img.data[i*img.stride + j] + 
-                                                    4*img.data[i*img.stride + j + 1] + 
-                                                    img.data[i*img.stride + j + 2];
+            *(row_center) = *center + 4 * *(center + 1) + 6* *(center + 2) + 4* *(center + 3) + *(center + 4);
+            center++;
+            row_center++;
         }
+        center += 4;
+        row_center += 4;
     }
-    for (int i = 2; i < img.xsize - 2; i++)
+    row_center = row_gradients.data + 2;
+    center = gaussian.data + 2*img.stride + 2;
+    for (int i = 0; i < img.ysize - 4; i++)
 	{
-		for (int j = 2; j < img.ysize - 2; j++)
+        row_center_end = row_center + img.stride - 2;
+		while(row_center < row_center_end)
 		{
-            gaussian.data[j*img.stride + i] = (row_gradients.data[(j-2)*img.stride + i] + 
-                                            4*row_gradients.data[(j-1)*img.stride + i] + 
-                                            6*row_gradients.data[(j)*img.stride + i] + 
-                                            4*row_gradients.data[(j+1)*img.stride + i] + 
-                                            row_gradients.data[(j+2)*img.stride + i])/256;
+            *(center) = (*(row_center) + 
+                        4 * *(row_center + img.stride) + 
+                        6 * *(row_center + 2*img.stride) + 
+                        4 * *(row_center + 3*img.stride) + 
+                        *(row_center + 4*img.stride))/256;
+            center++;
+            row_center++;
 		}
+        center += 4;
+        row_center += 4;
 	}
 }
 
-void orb_detect_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, std::vector<Mat2<int32_t>> &decriptors, int fastThreshold, int numKeyPoints, int edge_width)
+void orb_detect_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, std::vector<Mat2<int32_t>> &decriptors, bool use_grad_indfo, int fastThreshold, int numKeyPoints, int edge_width)
 {   
     std::clock_t start;
+
+    //SOBEL Calculation
+    // std::vector<std::vector<std::pair<float, float>>> gradients(img.ysize, std::vector<std::pair<float, float>>(img.xsize));
+    Mat2<short> gradient_x(img.xsize, img.ysize);
+    Mat2<short> gradient_y(img.xsize, img.ysize);
     start = std::clock();
-	std::vector<KeyPoints> corners = fast9_detect_nonmax(img, fastThreshold);
+	calculateSobel(img, gradient_x, gradient_y);
+    std::cout << "Time SOBEL: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+
+    //FAST 9 features
+    start = std::clock();
+#ifdef NO_NONMAX
+    std::vector<KeyPoints> corners = fast9_detect_corners(img, fastThreshold, 2*numKeyPoints, gradient_x, gradient_y, use_grad_indfo);
+#else
+	std::vector<KeyPoints> corners = fast9_detect_nonmax(img, fastThreshold, gradient_x, gradient_y, use_grad_indfo);
+#endif
     std::cout << "Time fast: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
-    std::vector<std::vector<std::pair<float, float>>> gradients(img.ysize, std::vector<std::pair<float, float>>(img.xsize));
-	calculateSobel(img, gradients);
     remove_edge_keypoints(img, corners, edge_width);
-    good_corners = calculateHarrisAndKeepGood(img, corners, gradients, numKeyPoints, edge_width);
+    start = std::clock();
+    good_corners = calculateHarrisAndKeepGood(img, corners, gradient_x, gradient_y, numKeyPoints, edge_width);
+    std::cout << "Time HARRIS: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 	// if (corners.size() > numKeyPoints)
 	// 	good_corners = calculateHarrisAndKeepGood(img, corners, gradients, numKeyPoints, edge_width);
 	// {
@@ -488,16 +544,24 @@ void orb_detect_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, s
 
     // calculateSummedAreaTable(img, summedAreaTable);
 
-	calculateOrientationOfCorners(img, good_corners, gradients);
-
+    start = std::clock();
+	calculateOrientationOfCorners(img, good_corners, gradient_x, gradient_y);
+    std::cout << "Time Angle: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+#ifdef GAUSSIAN_BLUR
     Mat2<byte> gaussian(img.xsize, img.ysize);
 
+    start = std::clock();
     gaussianBlur(img, gaussian);
+    std::cout << "Time GAUSSIAN: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     computerOrbDescriptor(gaussian, good_corners, decriptors);
+#else
+    computerOrbDescriptor(img, good_corners, decriptors);
+#endif
+
 }
 
-std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b)
+std::vector<KeyPoints> fast9_detect_corners(Mat2<byte> &img, int b, int numKeyPoints, Mat2<short> &gradient_x, Mat2<short> &gradient_y, bool use_grad_indfo)
 {
 	byte *im = img.data;
 	int xsize = img.xsize;
@@ -505,23 +569,119 @@ std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b)
 	int stride = img.stride;
 	xy *corners;
 	int num_corners;
-	// int *scores;
+	int *scores;
 	// xy *nonmax;
 
-	corners = fast9_detect(im, xsize, ysize, stride, b, &num_corners);
-	// scores = fast9_score(im, stride, corners, num_corners, b);
-	// nonmax = nonmax_suppression(corners, scores, num_corners, &num_corners);
+	corners = fast9_detect(im, xsize, ysize, stride, b, &num_corners, gradient_x, gradient_y, use_grad_indfo);
+    
+    std::cout << "No of FAST 9 Features " << num_corners << std::endl;
+    std::vector<KeyPoints> corners_nomax;
 
-	// free(corners);
-	// free(scores);
+    // if(num_corners > 1.2*numKeyPoints){
+
+    //     scores = fast9_score(im, stride, corners, num_corners, b);
+    //     std::vector<std::pair<int, int>> scores_indices;
+    //     for(int i=0; i<num_corners; i++){
+    //         scores_indices.push_back(std::make_pair(scores[i], i));
+    //     }
+    //     std::sort(scores_indices.rbegin(), scores_indices.rend());
+    //     // nonmax = nonmax_suppression(corners, scores, num_corners, &num_corners);
+
+
+    //     for (int i = 0; i < numKeyPoints; i++)
+    //     {
+    //         corners_nomax.push_back(corners[scores_indices[i].second]);
+    //     }
+	//     free(scores);
+    // }else{
+        for (int i = 0; i < num_corners; i++)
+        {
+            if(corner_max(im, corners[i], stride, 3))
+                corners_nomax.push_back(corners[i]);
+        }
+    // }
+	free(corners);
+
+    std::cout << "No of FAST 9 Features after non max " << corners_nomax.size() << std::endl;
+
+	// free(nonmax);
+	return corners_nomax;
+}
+
+bool corner_max(byte *im, xy corner, int stride, int kernelSize){
+    byte *p = im + corner.y*stride + corner.x;
+    float thresh = 1.5;
+    if(kernelSize == 3){
+        byte *p0 = p - stride, *p1 = p + stride;
+        if(*(p0 - 1) > thresh * *p) return false;
+        if(*(p0) > thresh * *p) return false;
+        if(*(p0 + 1) > thresh * *p) return false;
+        if(*(p - 1) > thresh * *p) return false;
+        if(*(p + 1) > thresh * *p) return false;
+        if(*(p1 - 1) > thresh * *p) return false;
+        if(*(p1) > thresh * *p) return false;
+        if(*(p1 + 1) > thresh * *p) return false;
+    }else if(kernelSize == 5){
+        byte *p0 = p - 2*stride, *p1 = p - stride, *p2 = p + stride, *p3 = p + 2*stride;
+        if(*(p0 - 2) > *p) return false;
+        if(*(p0 - 1) > *p) return false;
+        if(*(p0) > *p) return false;
+        if(*(p0 + 1) > *p) return false;
+        if(*(p0 + 2) > *p) return false;
+
+        if(*(p1 - 2) > *p) return false;
+        if(*(p1 - 1) > *p) return false;
+        if(*(p1) > *p) return false;
+        if(*(p1 + 1) > *p) return false;
+        if(*(p1 + 2) > *p) return false;
+
+        if(*(p - 2) > *p) return false;
+        if(*(p - 1) > *p) return false;
+        if(*(p + 1) > *p) return false;
+        if(*(p + 2) > *p) return false;
+
+        if(*(p2 - 2) > *p) return false;
+        if(*(p2 - 1) > *p) return false;
+        if(*(p2) > *p) return false;
+        if(*(p2 + 1) > *p) return false;
+        if(*(p2 + 2) > *p) return false;
+
+        if(*(p3 - 2) > *p) return false;
+        if(*(p3 - 1) > *p) return false;
+        if(*(p3) > *p) return false;
+        if(*(p3 + 1) > *p) return false;
+        if(*(p3 + 2) > *p) return false;
+    }
+
+    return true;
+}
+
+
+std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b, Mat2<short> &gradient_x, Mat2<short> &gradient_y, bool use_grad_indfo)
+{
+	byte *im = img.data;
+	int xsize = img.xsize;
+	int ysize = img.ysize;
+	int stride = img.stride;
+	xy *corners;
+	int num_corners;
+	int *scores;
+	xy *nonmax;
+
+	corners = fast9_detect(im, xsize, ysize, stride, b, &num_corners, gradient_x, gradient_y, use_grad_indfo);
+	scores = fast9_score(im, stride, corners, num_corners, b);
+	nonmax = nonmax_suppression(corners, scores, num_corners, &num_corners);
+
+	free(corners);
+	free(scores);
 
 	std::vector<KeyPoints> corners_nomax;
 	for (int i = 0; i < num_corners; i++)
 	{
-		corners_nomax.push_back(corners[i]);
+		corners_nomax.push_back(nonmax[i]);
 	}
 
-	// free(nonmax);
+	free(nonmax);
 	return corners_nomax;
 }
 
