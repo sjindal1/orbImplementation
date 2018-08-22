@@ -6,11 +6,13 @@
 #include<unordered_map>
 #include<math.h>
 
+namespace ORB
+{
 typedef struct { int x, y; } xy; 
 typedef unsigned char byte;
 
 #define NO_NONMAX
-#define GAUSSIAN_BLUR
+// #define GAUSSIAN_BLUR
 
 #ifdef NO_NONMAX
     #define FAST_THRESHOLD 20
@@ -20,8 +22,20 @@ typedef unsigned char byte;
 #define NUM_KEY_POINTS 1000
 #define CORNER_WIDTH 17
 #define HARRIS_BLOCK_SIZE 7
-#define PATCH_SIZE 31
+#define PATCH_SIZE 7
 #define PI 3.14159265
+
+template<class T>
+struct Point{
+    T x;
+    T y;
+
+    inline Point()
+        :x(0), y(0) {}
+
+    inline Point(T in_x, T in_y)
+        :x(in_x), y(in_y) {}
+};
 
 struct KeyPoints
 {
@@ -87,7 +101,11 @@ std::vector<KeyPoints> fast9_detect_corners(Mat2<byte> &img, int b, int numKeyPo
 
 xy* nonmax_suppression(const xy* corners, const int* scores, int num_corners, int* ret_num_nonmax);
 
-void orb_detect_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, std::vector<Mat2<int32_t>> &decriptors, bool use_grad_indfo = false, int fastThreshold = FAST_THRESHOLD, int numKeyPoints = NUM_KEY_POINTS, int edge_width = CORNER_WIDTH);
+void orb_detect(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, bool use_grad_indfo = false, int fastThreshold = FAST_THRESHOLD, int numKeyPoints = NUM_KEY_POINTS, int edge_width = CORNER_WIDTH);
+
+void orb_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, std::vector<Mat2<int32_t>> &decriptors);
+
+void orb_compute(Mat2<byte> &img, std::vector<KeyPoints> &good_corners, std::vector<Mat2<byte>> &decriptors);
 
 std::vector<KeyPoints> calculateHarrisAndKeepGood(Mat2<byte> &img, std::vector<KeyPoints> &corners, Mat2<short> &gradient_x, Mat2<short> &gradient_y, int numKeyPoints,int edge_width);
 
@@ -95,10 +113,16 @@ void calculateOrientationOfCorners(Mat2<byte> &img, std::vector<KeyPoints> &key_
 
 void computerOrbDescriptor(const Mat2<byte> &img, std::vector<KeyPoints> & corners, std::vector<Mat2<int32_t>> &descriptors);
 
+void computerOrbDescriptor(const Mat2<byte> &img, std::vector<KeyPoints> & corners, std::vector<Mat2<byte>> &descriptors);
+
 void remove_edge_keypoints(const Mat2<byte> &img, std::vector<KeyPoints> &corners, int edge_width);
 
 void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector<Mat2<int32_t>> &descriptors_scene, std::vector<std::vector<Match>> &matches);
 
 bool corner_max(byte *im, xy corner, int stride, int kernelSize);
 
+void findHomography(std::vector<Point<int>> &temp, std::vector<Point<int>> &scene, std::vector<float> &a);
+
+void perspectiveTransform(const std::vector<Point<int>> &src, std::vector<Point<int>> &transform, const std::vector<float> &a);
+} //namespace orb
 #endif

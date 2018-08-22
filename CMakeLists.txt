@@ -7,7 +7,8 @@ project(${APP_NAME})
 
 set (CMAKE_CXX_STANDARD 11)
 find_package(OpenCV REQUIRED)
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+# include_directories( ${OpenCV_INCLUDE_DIRS} "C:\\Program Files (x86)\\flann\\include")
+include_directories( ${OpenCV_INCLUDE_DIRS})
 
 set(APP_LIB feature_detection_lib)
 add_library(${APP_LIB} orb.cpp fast_9.cpp)

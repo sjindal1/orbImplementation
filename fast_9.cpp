@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "orb.hpp"
 
+namespace ORB
+{
 int fast9_corner_score(const byte* p, const int pixel[], int bstart)
 {    
     int bmin = bstart;
@@ -5921,3 +5923,4 @@ xy* fast9_detect(byte* im, int xsize, int ysize, int stride, int b, int* ret_num
 }
 
 
+} // namespace ORB
