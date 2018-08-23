@@ -9,17 +9,19 @@
 // #include <flann/flann.hpp>
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/features2d.hpp>
+// #include <opencv2/features2d.hpp>
 // #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/calib3d.hpp>
+// #include <opencv2/calib3d.hpp>
 
 using namespace cv;
 using namespace ORB;
 // using namespace cv::xfeatures2d;
 
 #define USE_ORB
+
+typedef std::vector<std::string> CommandLineStringArgs;
 
 void read_directory(const std::string &name, std::vector<std::string> &v)
 {
@@ -42,46 +44,16 @@ static bool startsWith(const std::string &str, const std::string &prefix)
     return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
 }
 
-typedef std::vector<std::string> CommandLineStringArgs;
-
-void findParams(std::vector<::ORB::Point<int>> &obj, std::vector<::ORB::Point<int>> &scene, std::vector<float> &a)
-{
-    if(a.size() < 4){
-        for(int i = a.size(); i<4; i++)
-            a.push_back(0);
-    }
-    float a1, a2, a3, a4;
-    int n = obj.size();
-    float x_avg = 0, y_avg = 0, x_d_avg = 0, y_d_avg = 0, x_t_x = 0, x_t_x_d = 0, x_t_y_d = 0, y_t_y = 0, y_t_y_d = 0, y_t_x_d = 0;
-    for (int i = 0; i < n; i++)
-    {
-        float x = obj[i].x, y = obj[i].y, x_d = scene[i].x, y_d = scene[i].y;
-        x_avg += x;
-        y_avg += y;
-        x_d_avg += x_d;
-        y_d_avg += y_d;
-        x_t_x += x * x;
-        y_t_y += y * y;
-        x_t_x_d += x * x_d;
-        x_t_y_d += x * y_d;
-        y_t_x_d += y * x_d;
-        y_t_y_d += y * y_d;
-    }
-    x_avg /= n;
-    x_d_avg /= n;
-    y_avg /= n;
-    y_d_avg /= n;
-    a1 = ((x_t_x_d - n * x_avg * x_d_avg) + (y_t_y_d - n * y_avg * y_d_avg)) / ((x_t_x - n * x_avg * x_avg) + (y_t_y - n * y_avg * y_avg));
-    a2 = ((x_t_y_d - n * x_avg * y_d_avg) - (y_t_x_d - n * y_avg * x_d_avg)) / ((x_t_x - n * x_avg * x_avg) + (y_t_y - n * y_avg * y_avg));
-    a3 = x_d_avg - a1 * x_avg + a2 * y_avg;
-    a4 = y_d_avg - a2 * x_avg - a1 * y_avg;
-
-    a[0] = a1;
-    a[1] = a2;
-    a[2] = a3;
-    a[3] = a4;
-}
-
+/**
+ * @brief The function is used to plot the matches found between the template features and the scene features. 
+ * It does not find or draw the template area in the scene according to the matches found.
+ * 
+ * @param displayImage Template Image
+ * @param displayImageScene Scene Image
+ * @param corners Features detected in the template image
+ * @param corners_scene Features detected in the scene image
+ * @param matches Matches found between the template and scene features
+ */
 void plotMatchesWithoutBox(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoints> &corners,std::vector<KeyPoints> &corners_scene, std::vector<Match> &matches){
     
     Mat templateImage = displayImage.clone();
@@ -114,6 +86,17 @@ void plotMatchesWithoutBox(Mat &displayImage, Mat &displayImageScene, std::vecto
     imshow("Matched features flann",displayTogether);
 }
 
+/**
+ * @brief The function is used to plot the matches found between the template features and the scene features. 
+ * It also finds and draws the template area in the scene according to the matches found.
+ * 
+ * @param displayImage 
+ * @param displayImageScene 
+ * @param corners 
+ * @param corners_scene 
+ * @param matches 
+ * @param name 
+ */
 void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoints> &corners,std::vector<KeyPoints> &corners_scene, std::vector<Match> &matches, std::string name="Matched features"){
     
     Mat templateImage = displayImage.clone();
@@ -143,7 +126,7 @@ void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoint
         line(displayTogether, Point2d(corner1.x, corner1.y), Point2d(corner2.x, corner2.y), color);        
     }
 
-#ifdef NO_NONMAX
+#ifdef NONMAX_CUSTOM
     std::vector<::ORB::Point<int>> obj, transfor_obj;
     std::vector<::ORB::Point<int>> scene;
 
@@ -186,68 +169,6 @@ void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoint
     imshow(name, displayTogether);
 }
 
-// void calculateBestMatches(std::vector<KeyPoints> &corners, std::vector<KeyPoints> &corners_scene, std::vector<Match> &good_matches, std::vector<Match> &best_matches){
-//     std::vector<Point2f> obj, transfor_obj;
-//     std::vector<Point2f> scene;
-
-//     for (int i = 0; i < good_matches.size(); i++)
-//     {
-//         //-- Get the keypoints from the good matches
-//         obj.push_back(Point2f(corners[good_matches[i].template_coor].coord.x, corners[good_matches[i].template_coor].coord.y));
-//         scene.push_back(Point2f(corners_scene[good_matches[i].scene_coor].coord.x, corners_scene[good_matches[i].scene_coor].coord.y));
-//     }
-    
-//     std::clock_t start;
-//     start = std::clock();
-//     Mat H = findHomography(obj, scene, CV_RANSAC);
-//     std::cout << "Time RANSAC: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-
-//     // std::cout << H << std::endl;
-
-//     cv::perspectiveTransform(obj, transfor_obj, H);
-
-//     for (int i = 0; i < obj.size(); i++)
-//     {
-//         float d = pow(scene[i].x - transfor_obj[i].x, 2) + pow(scene[i].y - transfor_obj[i].y, 2);
-//         if (d < 9)
-//         {
-//             best_matches.push_back(good_matches[i]);
-//         }
-//     }
-// }
-
-void calculateBestMatches(std::vector<KeyPoints> &corners, std::vector<KeyPoints> &corners_scene, std::vector<Match> &good_matches, std::vector<Match> &best_matches){
-    std::vector<::ORB::Point<int>> obj, transfor_obj;
-    std::vector<::ORB::Point<int>> scene;
-
-    for (int i = 0; i < good_matches.size(); i++)
-    {
-        //-- Get the keypoints from the good matches
-        obj.push_back(::ORB::Point<int>(corners[good_matches[i].template_coor].coord.x, corners[good_matches[i].template_coor].coord.y));
-        scene.push_back(::ORB::Point<int>(corners_scene[good_matches[i].scene_coor].coord.x, corners_scene[good_matches[i].scene_coor].coord.y));
-    }
-
-    std::vector<float> a;
-    
-    std::clock_t start;
-    start = std::clock();
-    findHomography(obj, scene, a);
-    std::cout << "Time RANSAC: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-
-    // std::cout << H << std::endl;
-
-    perspectiveTransform(obj, transfor_obj, a);
-
-    for (int i = 0; i < obj.size(); i++)
-    {
-        float d = pow(scene[i].x - transfor_obj[i].x, 2) + pow(scene[i].y - transfor_obj[i].y, 2);
-        if (d < 9)
-        {
-            best_matches.push_back(good_matches[i]);
-        }
-    }
-}
-
 int main(int argc, char **argv)
 {
 
@@ -259,7 +180,10 @@ int main(int argc, char **argv)
 
     CommandLineStringArgs cmdlineStringArgs(&argv[0], &argv[0 + argc]);
 
-    std::string scene_filename = cmdlineStringArgs[1];
+    std::string scene_path = cmdlineStringArgs[1];
+
+    std::vector<std::string> v;
+    read_directory(scene_path, v);
 
     // Template feature extraction
     std::string template_filename = cmdlineStringArgs[2];
@@ -285,7 +209,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    std::clock_t start;
+    std::clock_t start, start_main;
     start = std::clock();
     std::vector<KeyPoints> corners;
     std::vector<Mat2<int32_t>> decriptors;
@@ -301,169 +225,89 @@ int main(int argc, char **argv)
     std::cout << corners.size() << std::endl;
 
 
-    Mat opencv_img_1 = img_1.clone();
-    std::vector<KeyPoint> keypointsD;
-    Ptr<FastFeatureDetector> detector_fast=FastFeatureDetector::create();
-
-    detector_fast->detect(opencv_img_1,keypointsD,Mat());
-    drawKeypoints(opencv_img_1, keypointsD, opencv_img_1);
-    imshow("Fast keypoints",opencv_img_1);
-
-
     /// Scene
 
-    Mat img_2 = imread(scene_filename, IMREAD_GRAYSCALE); // Read the file
+    for (std::string filename : v)
+    {
+        if (!endsWith(filename, ".bmp"))
+            continue;
 
-    Mat2<byte> img_scene(img_2.cols, img_2.rows);
+        std::string scene_filename = scene_path + "\\" + filename;
 
-    k = 0;
-    for(int i=0; i < img_2.rows; i++){
-        for(int j = 0; j < img_2.cols; j++){
-            img_scene.data[k++] = img_2.at<uchar>(i,j);
+        Mat img_2 = imread(scene_filename, IMREAD_GRAYSCALE); // Read the file
+
+        Mat2<byte> img_scene(img_2.cols, img_2.rows);
+
+        k = 0;
+        for(int i=0; i < img_2.rows; i++){
+            for(int j = 0; j < img_2.cols; j++){
+                img_scene.data[k++] = img_2.at<uchar>(i,j);
+            }
+        }      
+
+        start_main = std::clock();
+
+        start = std::clock();
+        std::vector<KeyPoints> corners_scene;
+        std::vector<Mat2<int32_t>> decriptors_scene;
+        orb_detect(img_scene, corners_scene);
+        std::cout << "Time ORB detect : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+        
+        start = std::clock();
+        orb_compute(img_scene, corners_scene, decriptors_scene);
+        std::cout << "Time ORB compute : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+
+        start = std::clock();
+        std::vector<std::vector<Match>> matches;
+        matchFeatures(decriptors, decriptors_scene, matches);
+        std::vector<Match> good_matches;
+
+        for(std::vector<Match> nnMatches:matches){
+            // float ratio = 0.75;
+            // if(nnMatches[0].distance < ratio*nnMatches[1].distance){
+            //     good_matches.push_back(nnMatches[0]);
+            // }
+            good_matches.push_back(nnMatches[0]);
         }
-    }      
+        std::cout << "Time Brute Force : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+        Mat displayImageScene = img_2.clone();
 
+        cvtColor(displayImageScene, displayImageScene, CV_GRAY2BGR);
 
-    start = std::clock();
-    std::vector<KeyPoints> corners_scene;
-    std::vector<Mat2<int32_t>> decriptors_scene;
-    orb_detect(img_scene, corners_scene);
-    std::cout << "Time ORB detect : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-    
-    start = std::clock();
-    orb_compute(img_scene, corners_scene, decriptors_scene);
-    std::cout << "Time ORB compute : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+    #ifdef NONMAX_CUSTOM
+        std::vector<Match> best_matches;
+        calculateBestMatches(corners, corners_scene, good_matches, best_matches);
+        plotMatches(displayImage, displayImageScene, corners, corners_scene, best_matches);
+    #else
+        plotMatches(displayImage, displayImageScene, corners, corners_scene, good_matches);
+    #endif
+        std::cout << "Total Time : " << (std::clock() - start_main) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
-    std::vector<Mat2<byte>> descriptor_temp_byte;
-    std::vector<Mat2<byte>> descriptor_scene_byte;
+        for(KeyPoints corner:corners){
+            Scalar color = Scalar(rand()%255, rand()%255, rand()%255);
+            circle(displayImage, Point2d(corner.coord.x, corner.coord.y), 2, color);
+        }
+        cv::imshow("Fast features template", displayImage);
 
-    orb_compute(img_template, corners, descriptor_temp_byte);
-    start = std::clock();
-    orb_compute(img_scene, corners_scene, descriptor_scene_byte);
-    std::cout << "Time ORB compute byte : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+        for(KeyPoints corner:corners_scene){
+            Scalar color = Scalar(rand()%255, rand()%255, rand()%255);
+            circle(displayImageScene, Point2d(corner.coord.x, corner.coord.y), 2, color);
+        }
 
-    start = std::clock();
-    std::vector<std::vector<Match>> matches;
-    matchFeatures(decriptors, decriptors_scene, matches);
-    std::vector<Match> good_matches;
+        cv::imshow("Fast features scene", displayImageScene);
 
-    for(std::vector<Match> nnMatches:matches){
-        // float ratio = 0.75;
-        // if(nnMatches[0].distance < ratio*nnMatches[1].distance){
-        //     good_matches.push_back(nnMatches[0]);
-        // }
-        good_matches.push_back(nnMatches[0]);
+        std::cout << corners_scene.size() << std::endl;
+
+        best_matches.clear();
+        good_matches.clear();
+
+        char key = waitKey(0);
+
+        if (key == 'b')
+        {
+            break;
+        }
     }
-    std::cout << "Time Brute Force : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-    Mat displayImageScene = img_2.clone();
-
-    cvtColor(displayImageScene, displayImageScene, CV_GRAY2BGR);
-
-#ifdef NO_NONMAX
-    std::vector<Match> best_matches;
-    calculateBestMatches(corners, corners_scene, good_matches, best_matches);
-    plotMatches(displayImage, displayImageScene, corners, corners_scene, best_matches);
-#else
-    plotMatches(displayImage, displayImageScene, corners, corners_scene, good_matches);
-#endif
-
-
-
-    // typedef ::flann::Hamming<byte> Distance;
-	// typedef Distance::ElementType ElementType;
-	// typedef Distance::ResultType DistanceType;
-	// ::flann::Matrix<byte> query(new byte[descriptor_temp_byte.size()*descriptor_temp_byte[0].xsize], descriptor_temp_byte.size(), descriptor_temp_byte[0].xsize);
-	// ::flann::Matrix<byte> data(new byte[descriptor_scene_byte.size()*descriptor_scene_byte[0].xsize], descriptor_scene_byte.size(), descriptor_scene_byte[0].xsize);
-	// ::flann::Matrix<size_t> gt_indices;
-	// // ::flann::Matrix<DistanceType> dists;
-	// ::flann::Matrix<DistanceType> gt_dists;
-	// // ::flann::Matrix<size_t> indices;
-	// unsigned int k_nn_ = 2;
-
-    // byte *matrix_ptr = query.ptr();
-    // for(int i=0; i<descriptor_temp_byte.size(); i++){
-    //     byte *mat2_ptr =  descriptor_temp_byte[i].data;
-    //     for(int j=0; j<descriptor_temp_byte[i].xsize; j++){
-    //         *matrix_ptr = *mat2_ptr;
-    //         matrix_ptr++;
-    //         mat2_ptr++;
-    //     }
-    // }
-
-    // matrix_ptr = data.ptr();
-    // for(int i=0; i<descriptor_scene_byte.size(); i++){
-    //     byte *mat2_ptr =  descriptor_scene_byte[i].data;
-    //     for(int j=0; j<descriptor_scene_byte[i].xsize; j++){
-    //         *matrix_ptr = *mat2_ptr;
-    //         matrix_ptr++;
-    //         mat2_ptr++;
-    //     }
-    // }
-    
-    
-    // start = std::clock();
-    // ::flann::Index<Distance> index(data, ::flann::LshIndexParams(12, 20, 2));
-    // index.buildIndex();
-
-    // // std::vector< std::vector<int> > indices;
-    // // std::vector<std::vector<DistanceType> > dists;
-    // gt_indices = ::flann::Matrix<size_t>(new size_t[query.rows * k_nn_], query.rows, k_nn_);
-    // gt_dists = ::flann::Matrix<DistanceType>(new DistanceType[query.rows * k_nn_], query.rows, k_nn_);
-    // index.knnSearch(query, gt_indices, gt_dists, k_nn_, ::flann::SearchParams(-1));
-    
-    // std::cout << "Time FLANN : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-    // // index.knnSearch(query, indices, dists, k_nn_, ::flann::SearchParams(-1));
-
-    // size_t *index_ptr = gt_indices.ptr();
-    // DistanceType *dist_ptr_1 = gt_dists.ptr();
-    // DistanceType *dist_ptr_2 = dist_ptr_1 + 1;
-
-    // std::vector<Match> good_matches_flann;
-    // for(int i=0; i < gt_indices.rows; i++){
-    //     if(*dist_ptr_1 < 0.7 * *dist_ptr_2){
-    //         good_matches_flann.push_back(Match(i, *index_ptr, *dist_ptr_1));
-    //     }
-    //     dist_ptr_1 += 2;
-    //     dist_ptr_2 += 2;
-    //     index_ptr += 2;
-    // }
-    // std::vector<Match> best_matches_flann;
-    // calculateBestMatches(corners, corners_scene, good_matches_flann, best_matches_flann);
-    // plotMatches(displayImage, displayImageScene, corners, corners_scene, best_matches_flann, "Matched Features FLANN");
-    // plotMatchesWithoutBox(displayImage, displayImageScene, corners, corners_scene, best_matches_flann);
-
-
-
-
-
-    // for(std::vector<int> knn_indices:indices){
-    //     for(int index:knn_indices){
-    //         std::cout << index << std::endl;
-    //     }
-    // }
-    for(KeyPoints corner:corners){
-        Scalar color = Scalar(rand()%255, rand()%255, rand()%255);
-        circle(displayImage, Point2d(corner.coord.x, corner.coord.y), 2, color);
-    }
-    cv::imshow("Fast features template", displayImage);
-
-    for(KeyPoints corner:corners_scene){
-        Scalar color = Scalar(rand()%255, rand()%255, rand()%255);
-        circle(displayImageScene, Point2d(corner.coord.x, corner.coord.y), 2, color);
-    }
-
-    cv::imshow("Fast features scene", displayImageScene);
-
-    std::cout << corners_scene.size() << std::endl;
-
-    Mat opencv_img_2 = img_2.clone();
-    std::vector<KeyPoint> keypointsD_scene;
-
-    detector_fast->detect(opencv_img_2,keypointsD_scene,Mat());
-    drawKeypoints(opencv_img_2, keypointsD_scene, opencv_img_2);
-    imshow("Fast keypoints scene",opencv_img_2);
-
-    char key = waitKey(0);
 
 
     return 0;
