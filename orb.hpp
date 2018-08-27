@@ -204,7 +204,7 @@ int fast9_corner_score(const byte* p, const int pixel[], int bstart);
  * @param ret_num_corners number of features detected
  * @return xy* List of coordinates of features detected
  */
-xy* fast9_detect(byte* im, int xsize, int ysize, int stride, int b, int* ret_num_corners, Mat2<short> &gradient_x, Mat2<short> &gradient_y, bool use_grad_indfo);
+xy* fast9_detect(byte* im, int xsize, int ysize, int stride, int b, int* ret_num_corners);
 
 /**
  * @brief Calculate FAST 9 score for all the features detected
@@ -225,7 +225,7 @@ int* fast9_score(const byte* i, int stride, xy* corners, int num_corners, int b)
  * @param b FAST 9 Threshold
  * @return std::vector<KeyPoints> List of features detected
  */
-std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b, Mat2<short> &gradient_x, Mat2<short> &gradient_y, bool use_grad_indfo);
+std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b);
 
 /**
  * @brief Detect fast 9 features in an image using the custom nonmax suppression
@@ -235,7 +235,7 @@ std::vector<KeyPoints> fast9_detect_nonmax(Mat2<byte> &img, int b, Mat2<short> &
  * @param numKeyPoints Number of features you want 
  * @return std::vector<KeyPoints> List of features detected
  */
-std::vector<KeyPoints> fast9_detect_corners(Mat2<byte> &img, int b, int numKeyPoints, Mat2<short> &gradient_x, Mat2<short> &gradient_y, bool use_grad_indfo);
+std::vector<KeyPoints> fast9_detect_corners(Mat2<byte> &img, int b, int numKeyPoints);
 
 /**
  * @brief Library nonmax suppression function

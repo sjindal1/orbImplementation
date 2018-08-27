@@ -246,26 +246,18 @@ int main(int argc, char **argv)
     orb_compute(img_scene, corners_scene, decriptors_scene);
     std::cout << "Time ORB compute : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
-    std::vector<Mat2<byte>> descriptor_temp_byte;
-    std::vector<Mat2<byte>> descriptor_scene_byte;
+    // std::vector<Mat2<byte>> descriptor_temp_byte;
+    // std::vector<Mat2<byte>> descriptor_scene_byte;
 
-    orb_compute(img_template, corners, descriptor_temp_byte);
-    start = std::clock();
-    orb_compute(img_scene, corners_scene, descriptor_scene_byte);
-    std::cout << "Time ORB compute byte : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+    // orb_compute(img_template, corners, descriptor_temp_byte);
+    // start = std::clock();
+    // orb_compute(img_scene, corners_scene, descriptor_scene_byte);
+    // std::cout << "Time ORB compute byte : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     start = std::clock();
     std::vector<Match> matches;
     matchFeatures(decriptors, decriptors_scene, matches);
-    // std::vector<Match> good_matches;
-
-    // for(std::vector<Match> nnMatches:matches){
-    //     // float ratio = 0.75;
-    //     // if(nnMatches[0].distance < ratio*nnMatches[1].distance){
-    //     //     good_matches.push_back(nnMatches[0]);
-    //     // }
-    //     good_matches.push_back(nnMatches[0]);
-    // }
+    
     std::cout << "Time Brute Force : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
     Mat displayImageScene = img_2.clone();
 
