@@ -44,44 +44,16 @@ static bool startsWith(const std::string &str, const std::string &prefix)
 
 typedef std::vector<std::string> CommandLineStringArgs;
 
-void findParams(std::vector<::ORB::Point<int>> &obj, std::vector<::ORB::Point<int>> &scene, std::vector<float> &a)
-{
-    if(a.size() < 4){
-        for(int i = a.size(); i<4; i++)
-            a.push_back(0);
-    }
-    float a1, a2, a3, a4;
-    int n = obj.size();
-    float x_avg = 0, y_avg = 0, x_d_avg = 0, y_d_avg = 0, x_t_x = 0, x_t_x_d = 0, x_t_y_d = 0, y_t_y = 0, y_t_y_d = 0, y_t_x_d = 0;
-    for (int i = 0; i < n; i++)
-    {
-        float x = obj[i].x, y = obj[i].y, x_d = scene[i].x, y_d = scene[i].y;
-        x_avg += x;
-        y_avg += y;
-        x_d_avg += x_d;
-        y_d_avg += y_d;
-        x_t_x += x * x;
-        y_t_y += y * y;
-        x_t_x_d += x * x_d;
-        x_t_y_d += x * y_d;
-        y_t_x_d += y * x_d;
-        y_t_y_d += y * y_d;
-    }
-    x_avg /= n;
-    x_d_avg /= n;
-    y_avg /= n;
-    y_d_avg /= n;
-    a1 = ((x_t_x_d - n * x_avg * x_d_avg) + (y_t_y_d - n * y_avg * y_d_avg)) / ((x_t_x - n * x_avg * x_avg) + (y_t_y - n * y_avg * y_avg));
-    a2 = ((x_t_y_d - n * x_avg * y_d_avg) - (y_t_x_d - n * y_avg * x_d_avg)) / ((x_t_x - n * x_avg * x_avg) + (y_t_y - n * y_avg * y_avg));
-    a3 = x_d_avg - a1 * x_avg + a2 * y_avg;
-    a4 = y_d_avg - a2 * x_avg - a1 * y_avg;
-
-    a[0] = a1;
-    a[1] = a2;
-    a[2] = a3;
-    a[3] = a4;
-}
-
+/**
+ * @brief The function is used to plot the matches found between the template features and the scene features. 
+ * It does not find or draw the template area in the scene according to the matches found.
+ * 
+ * @param displayImage Template Image
+ * @param displayImageScene Scene Image
+ * @param corners Features detected in the template image
+ * @param corners_scene Features detected in the scene image
+ * @param matches Matches found between the template and scene features
+ */
 void plotMatchesWithoutBox(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoints> &corners,std::vector<KeyPoints> &corners_scene, std::vector<Match> &matches){
     
     Mat templateImage = displayImage.clone();
@@ -114,6 +86,17 @@ void plotMatchesWithoutBox(Mat &displayImage, Mat &displayImageScene, std::vecto
     imshow("Matched features flann",displayTogether);
 }
 
+/**
+ * @brief The function is used to plot the matches found between the template features and the scene features. 
+ * It also finds and draws the template area in the scene according to the matches found.
+ * 
+ * @param displayImage 
+ * @param displayImageScene 
+ * @param corners 
+ * @param corners_scene 
+ * @param matches 
+ * @param name 
+ */
 void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoints> &corners,std::vector<KeyPoints> &corners_scene, std::vector<Match> &matches, std::string name="Matched features"){
     
     Mat templateImage = displayImage.clone();
@@ -184,68 +167,6 @@ void plotMatches(Mat &displayImage, Mat &displayImageScene, std::vector<KeyPoint
 
 #endif
     imshow(name, displayTogether);
-}
-
-// void calculateBestMatches(std::vector<KeyPoints> &corners, std::vector<KeyPoints> &corners_scene, std::vector<Match> &good_matches, std::vector<Match> &best_matches){
-//     std::vector<Point2f> obj, transfor_obj;
-//     std::vector<Point2f> scene;
-
-//     for (int i = 0; i < good_matches.size(); i++)
-//     {
-//         //-- Get the keypoints from the good matches
-//         obj.push_back(Point2f(corners[good_matches[i].template_coor].coord.x, corners[good_matches[i].template_coor].coord.y));
-//         scene.push_back(Point2f(corners_scene[good_matches[i].scene_coor].coord.x, corners_scene[good_matches[i].scene_coor].coord.y));
-//     }
-    
-//     std::clock_t start;
-//     start = std::clock();
-//     Mat H = findHomography(obj, scene, CV_RANSAC);
-//     std::cout << "Time RANSAC: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-
-//     // std::cout << H << std::endl;
-
-//     cv::perspectiveTransform(obj, transfor_obj, H);
-
-//     for (int i = 0; i < obj.size(); i++)
-//     {
-//         float d = pow(scene[i].x - transfor_obj[i].x, 2) + pow(scene[i].y - transfor_obj[i].y, 2);
-//         if (d < 9)
-//         {
-//             best_matches.push_back(good_matches[i]);
-//         }
-//     }
-// }
-
-void calculateBestMatches(std::vector<KeyPoints> &corners, std::vector<KeyPoints> &corners_scene, std::vector<Match> &good_matches, std::vector<Match> &best_matches){
-    std::vector<::ORB::Point<int>> obj, transfor_obj;
-    std::vector<::ORB::Point<int>> scene;
-
-    for (int i = 0; i < good_matches.size(); i++)
-    {
-        //-- Get the keypoints from the good matches
-        obj.push_back(::ORB::Point<int>(corners[good_matches[i].template_coor].coord.x, corners[good_matches[i].template_coor].coord.y));
-        scene.push_back(::ORB::Point<int>(corners_scene[good_matches[i].scene_coor].coord.x, corners_scene[good_matches[i].scene_coor].coord.y));
-    }
-
-    std::vector<float> a;
-    
-    std::clock_t start;
-    start = std::clock();
-    findHomography(obj, scene, a);
-    std::cout << "Time RANSAC: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-
-    // std::cout << H << std::endl;
-
-    perspectiveTransform(obj, transfor_obj, a);
-
-    for (int i = 0; i < obj.size(); i++)
-    {
-        float d = pow(scene[i].x - transfor_obj[i].x, 2) + pow(scene[i].y - transfor_obj[i].y, 2);
-        if (d < 9)
-        {
-            best_matches.push_back(good_matches[i]);
-        }
-    }
 }
 
 int main(int argc, char **argv)
