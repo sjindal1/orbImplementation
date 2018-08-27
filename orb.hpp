@@ -338,9 +338,9 @@ void remove_edge_keypoints(const Mat2<byte> &img, std::vector<KeyPoints> &corner
  * 
  * @param descriptors_template BRIEF Descriptors in template image
  * @param descriptors_scene BRIEF Descriptors in scene image
- * @param matches 2 best matched for each template descriptor in scene
+ * @param matches Best Match found from brute force
  */
-void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector<Mat2<int32_t>> &descriptors_scene, std::vector<std::vector<Match>> &matches);
+void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector<Mat2<int32_t>> &descriptors_scene, std::vector<Match> &matches);
 
 /**
  * @brief The  function is used for custom nonmax suppression. It checks if the corner is max in 3x3 or 5x5 block

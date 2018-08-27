@@ -222,15 +222,6 @@ int main(int argc, char **argv)
     std::cout << corners.size() << std::endl;
 
 
-    Mat opencv_img_1 = img_1.clone();
-    std::vector<KeyPoint> keypointsD;
-    Ptr<FastFeatureDetector> detector_fast=FastFeatureDetector::create();
-
-    detector_fast->detect(opencv_img_1,keypointsD,Mat());
-    drawKeypoints(opencv_img_1, keypointsD, opencv_img_1);
-    imshow("Fast keypoints",opencv_img_1);
-
-
     /// Scene
 
     Mat img_2 = imread(scene_filename, IMREAD_GRAYSCALE); // Read the file
@@ -264,17 +255,17 @@ int main(int argc, char **argv)
     std::cout << "Time ORB compute byte : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
     start = std::clock();
-    std::vector<std::vector<Match>> matches;
+    std::vector<Match> matches;
     matchFeatures(decriptors, decriptors_scene, matches);
-    std::vector<Match> good_matches;
+    // std::vector<Match> good_matches;
 
-    for(std::vector<Match> nnMatches:matches){
-        // float ratio = 0.75;
-        // if(nnMatches[0].distance < ratio*nnMatches[1].distance){
-        //     good_matches.push_back(nnMatches[0]);
-        // }
-        good_matches.push_back(nnMatches[0]);
-    }
+    // for(std::vector<Match> nnMatches:matches){
+    //     // float ratio = 0.75;
+    //     // if(nnMatches[0].distance < ratio*nnMatches[1].distance){
+    //     //     good_matches.push_back(nnMatches[0]);
+    //     // }
+    //     good_matches.push_back(nnMatches[0]);
+    // }
     std::cout << "Time Brute Force : " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
     Mat displayImageScene = img_2.clone();
 
@@ -282,7 +273,7 @@ int main(int argc, char **argv)
 
 #ifdef NO_NONMAX
     std::vector<Match> best_matches;
-    calculateBestMatches(corners, corners_scene, good_matches, best_matches);
+    calculateBestMatches(corners, corners_scene, matches, best_matches);
     plotMatches(displayImage, displayImageScene, corners, corners_scene, best_matches);
 #else
     plotMatches(displayImage, displayImageScene, corners, corners_scene, good_matches);
@@ -376,13 +367,6 @@ int main(int argc, char **argv)
     cv::imshow("Fast features scene", displayImageScene);
 
     std::cout << corners_scene.size() << std::endl;
-
-    Mat opencv_img_2 = img_2.clone();
-    std::vector<KeyPoint> keypointsD_scene;
-
-    detector_fast->detect(opencv_img_2,keypointsD_scene,Mat());
-    drawKeypoints(opencv_img_2, keypointsD_scene, opencv_img_2);
-    imshow("Fast keypoints scene",opencv_img_2);
 
     char key = waitKey(0);
 

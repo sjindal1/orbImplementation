@@ -935,13 +935,13 @@ xy *nonmax_suppression(const xy *corners, const int *scores, int num_corners, in
 }
 
 
-void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector<Mat2<int32_t>> &descriptors_scene, std::vector<std::vector<Match>> &matches){
+void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector<Mat2<int32_t>> &descriptors_scene, std::vector<Match> &matches){
     int template_size = descriptors_template.size();
     int scene_size = descriptors_scene.size();
 
     for(int i=0; i < template_size; i++){
         int32_t *template_despriptor = descriptors_template[i].data;
-        int match_index_1 = -1, match_index_2 = -1; float distance_1 = 512, distance_2 = 512; 
+        int match_index = -1; float distance = 512; 
         for(int j=0; j < scene_size; j++){
             int32_t *scene_despriptor = descriptors_scene[j].data;
             float score = 0;
@@ -949,23 +949,14 @@ void matchFeatures(std::vector<Mat2<int32_t>> &descriptors_template, std::vector
                 score += __builtin_popcount(template_despriptor[k]^scene_despriptor[k]);
             }
 
-            if(score < distance_1){
-                distance_2 = distance_1;
-                match_index_2 = match_index_1;
-                distance_1 = score;
-                match_index_1 = j;
-            }else if(score < distance_2){
-                distance_2 = score;
-                match_index_2 = j;
+            if(score < distance){
+                distance = score;
+                match_index = j;
             }
         }
 
-        Match match_1(i, match_index_1, distance_1);
-        Match match_2(i, match_index_2, distance_2);
-        std::vector<Match> nnMatch;
-        nnMatch.push_back(match_1);
-        nnMatch.push_back(match_2);
-        matches.push_back(nnMatch);
+        Match match(i, match_index, distance);
+        matches.push_back(match);
     }
 }
 
