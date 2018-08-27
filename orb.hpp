@@ -397,7 +397,6 @@ void perspectiveTransform(const std::vector<Point<int>> &src, std::vector<Point<
  * @param a 
  */
 void findParams(std::vector<::ORB::Point<int>> &obj, std::vector<::ORB::Point<int>> &scene, std::vector<float> &a);
-
  /**
  * @brief Calculates the best matches using RANSAC 
  * 
@@ -407,7 +406,6 @@ void findParams(std::vector<::ORB::Point<int>> &obj, std::vector<::ORB::Point<in
  * @param best_matches The output matches
  */
 void calculateBestMatches(std::vector<KeyPoints> &corners, std::vector<KeyPoints> &corners_scene, std::vector<Match> &good_matches, std::vector<Match> &best_matches);
-
  /**
  * @brief collects the Harris and angle calculation into one function and doesn't use previously calculated intensity informations thus saving space
  * 
